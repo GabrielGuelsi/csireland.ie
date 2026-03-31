@@ -69,6 +69,7 @@ class Student extends Model
     {
         return match($status) {
             'waiting_initial_documents' => 'Waiting for Documents (Initial)',
+            'first_contact_made'        => 'First Contact Made',
             'waiting_offer_letter'      => 'Waiting for Offer Letter',
             'waiting_english_exam'      => 'Waiting for English Exam (College)',
             'waiting_duolingo'          => 'Waiting for Duolingo',
@@ -87,6 +88,7 @@ class Student extends Model
     {
         return [
             'waiting_initial_documents',
+            'first_contact_made',
             'waiting_offer_letter',
             'waiting_english_exam',
             'waiting_duolingo',

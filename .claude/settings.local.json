@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find C:UsersPC_DeskDesktopeduauto-platform/resources/views -type f -name *.blade.php)",
+      "Bash(find C:UsersPC_DeskDesktopeduauto-platform/app/Models -type f -name *.php)",
+      "Bash(find \"C:\\\\Users\\\\PC_Desk\\\\Desktop\\\\eduauto-platform/database/migrations\" -type f -exec basename {})",
+      "Bash(xargs ls:*)",
+      "Bash(php artisan:*)",
+      "Bash(find /c/Users/PC_Desk/Desktop/eduauto-platform -name .htaccess -o -name nginx.conf -o -name *.nginx)",
+      "Bash(ls:*)",
+      "Bash(grep -n \"password\\\\|token\\\\|secret\\\\|key\" /c/Users/PC_Desk/Desktop/eduauto-platform/app/Http/Controllers/Api/*.php)",
+      "Bash(grep:*)"
+    ]
+  }
+}

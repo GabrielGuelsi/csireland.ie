@@ -1,0 +1,101 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Student extends Model
+{
+    protected $fillable = [
+        'name', 'email', 'whatsapp_phone',
+        'product_type', 'product_type_other', 'course', 'university', 'intake',
+        'sales_price', 'sales_price_scholarship',
+        'pending_documents', 'observations', 'reapplication_action',
+        'sales_consultant_id', 'assigned_cs_agent_id',
+        'status', 'priority', 'system',
+        'exam_date', 'exam_result', 'payment_status', 'visa_status',
+        'visa_expiry_date', 'date_of_birth',
+        'form_submitted_at', 'first_contacted_at', 'gift_received_at',
+    ];
+
+    protected $casts = [
+        'form_submitted_at'  => 'datetime',
+        'first_contacted_at' => 'datetime',
+        'gift_received_at'   => 'datetime',
+        'exam_date'          => 'date',
+        'visa_expiry_date'   => 'date',
+        'date_of_birth'      => 'date',
+        'sales_price'        => 'decimal:2',
+        'sales_price_scholarship' => 'decimal:2',
+    ];
+
+    public function salesConsultant()
+    {
+        return $this->belongsTo(SalesConsultant::class);
+    }
+
+    public function assignedAgent()
+    {
+        return $this->belongsTo(User::class, 'assigned_cs_agent_id');
+    }
+
+    public function stageLogs()
+    {
+        return $this->hasMany(StudentStageLog::class);
+    }
+
+    public function notes()
+    {
+        return $this->hasMany(Note::class)->orderByDesc('created_at');
+    }
+
+    public function messageLogs()
+    {
+        return $this->hasMany(MessageLog::class);
+    }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    public function scheduledMessages()
+    {
+        return $this->hasMany(ScheduledStudentMessage::class);
+    }
+
+    public static function statusLabel(string $status): string
+    {
+        return match($status) {
+            'waiting_initial_documents' => 'Waiting for Documents (Initial)',
+            'waiting_offer_letter'      => 'Waiting for Offer Letter',
+            'waiting_english_exam'      => 'Waiting for English Exam (College)',
+            'waiting_duolingo'          => 'Waiting for Duolingo',
+            'waiting_reapplication'     => 'Waiting for Reapplication',
+            'waiting_college_documents' => 'Waiting for Documents (College)',
+            'waiting_college_response'  => 'Waiting for College Response',
+            'waiting_payment'           => 'Waiting for Payment',
+            'waiting_student_response'  => 'Waiting for Student Response',
+            'cancelled'                 => 'Cancelled',
+            'concluded'                 => 'Concluded',
+            default                     => ucfirst(str_replace('_', ' ', $status)),
+        };
+    }
+
+    public static function allStatuses(): array
+    {
+        return [
+            'waiting_initial_documents',
+            'waiting_offer_letter',
+            'waiting_english_exam',
+            'waiting_duolingo',
+            'waiting_reapplication',
+            'waiting_college_documents',
+            'waiting_college_response',
+            'waiting_payment',
+            'waiting_student_response',
+            'cancelled',
+            'concluded',
+        ];
+    }
+}

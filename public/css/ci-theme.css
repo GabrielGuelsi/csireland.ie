@@ -1,0 +1,193 @@
+/* ============================================================
+   CI Exchange / EduAuto — Brand Theme
+   Primary:  #3D1F3D  (dark purple)
+   Accent:   #F26522  (orange)
+   Font:     Montserrat
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
+/* --- Global font --- */
+body,
+.nav-sidebar .nav-link,
+.brand-text,
+.content-header h1,
+.card-title,
+.btn {
+    font-family: 'Montserrat', sans-serif !important;
+}
+
+/* ---- Sidebar ---- */
+.main-sidebar,
+.main-sidebar .sidebar {
+    background-color: #3D1F3D !important;
+}
+
+/* Brand / logo bar */
+.main-sidebar .brand-link {
+    background-color: #2e1630 !important;
+    border-bottom: 1px solid rgba(242, 101, 34, 0.4) !important;
+}
+
+.main-sidebar .brand-text {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px;
+}
+
+/* Sidebar nav text */
+.nav-sidebar .nav-link {
+    color: rgba(255, 255, 255, 0.80) !important;
+}
+
+.nav-sidebar .nav-link:hover,
+.nav-sidebar .nav-link:focus {
+    color: #ffffff !important;
+    background-color: rgba(242, 101, 34, 0.18) !important;
+}
+
+/* Active nav item */
+.nav-sidebar .nav-item > .nav-link.active,
+.nav-sidebar .nav-item.menu-open > .nav-link {
+    background-color: #F26522 !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+}
+
+/* Section headers */
+.nav-sidebar .nav-header {
+    color: rgba(242, 101, 34, 0.75) !important;
+    font-size: 0.70rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 1px;
+}
+
+/* Sidebar icons */
+.nav-sidebar .nav-icon {
+    color: rgba(255, 255, 255, 0.60) !important;
+}
+
+.nav-sidebar .nav-link.active .nav-icon {
+    color: #ffffff !important;
+}
+
+/* ---- Top navbar ---- */
+.main-header.navbar {
+    background-color: #ffffff !important;
+    border-bottom: 3px solid #F26522 !important;
+}
+
+/* ---- Buttons ---- */
+.btn-primary {
+    background-color: #F26522 !important;
+    border-color: #F26522 !important;
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: #d4541a !important;
+    border-color: #d4541a !important;
+}
+
+/* ---- Links ---- */
+a {
+    color: #F26522;
+}
+
+a:hover {
+    color: #d4541a;
+}
+
+/* ---- Small boxes (dashboard stats) ---- */
+.small-box.bg-info {
+    background-color: #3D1F3D !important;
+}
+
+.small-box.bg-warning {
+    background-color: #F26522 !important;
+}
+
+.small-box.bg-success {
+    background-color: #2e7d32 !important;
+}
+
+.small-box.bg-danger {
+    background-color: #c0392b !important;
+}
+
+/* ---- Card headers ---- */
+.card-primary.card-outline {
+    border-top: 3px solid #F26522 !important;
+}
+
+.card > .card-header {
+    border-bottom: 2px solid #F26522 !important;
+    font-weight: 600;
+}
+
+/* ---- Badges ---- */
+.badge-warning  { background-color: #F26522 !important; color: #fff !important; }
+.badge-primary  { background-color: #3D1F3D !important; color: #fff !important; }
+.badge-info     { background-color: #5b4e8c !important; color: #fff !important; }
+
+/* ---- Content header ---- */
+.content-header h1 {
+    color: #3D1F3D;
+    font-weight: 700;
+}
+
+/* ---- Pagination ---- */
+.page-item.active .page-link {
+    background-color: #F26522 !important;
+    border-color: #F26522 !important;
+}
+
+.page-link {
+    color: #F26522 !important;
+}
+
+/* ---- Preloader ---- */
+#loading-screen {
+    background-color: #3D1F3D !important;
+}
+
+/* ---- Login / Auth pages ---- */
+.login-page,
+.register-page {
+    background-color: #3D1F3D !important;
+}
+
+.login-box-msg,
+.register-box-msg {
+    color: #3D1F3D;
+    font-weight: 600;
+}
+
+.login-logo a,
+.register-logo a {
+    color: #ffffff !important;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+}
+
+.login-card-body,
+.register-card-body {
+    border-top: 4px solid #F26522 !important;
+}
+
+/* ---- Table hover ---- */
+.table-hover tbody tr:hover {
+    background-color: rgba(242, 101, 34, 0.06) !important;
+}
+
+/* ---- Scrollbar (webkit) ---- */
+::-webkit-scrollbar-thumb {
+    background-color: #F26522;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+}

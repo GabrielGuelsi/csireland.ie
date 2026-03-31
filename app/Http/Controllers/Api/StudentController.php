@@ -213,9 +213,17 @@ class StudentController extends Controller
             abort(403);
         }
 
-        $student->update(['last_contacted_at' => now()]);
+        $updates = ['last_contacted_at' => now()];
+        if (!$student->first_contacted_at) {
+            $updates['first_contacted_at'] = now();
+        }
+        $student->update($updates);
 
-        return response()->json(['ok' => true, 'last_contacted_at' => $student->last_contacted_at->toIso8601String()]);
+        return response()->json([
+            'ok'                 => true,
+            'last_contacted_at'  => $student->last_contacted_at->toIso8601String(),
+            'first_contacted_at' => $student->first_contacted_at->toIso8601String(),
+        ]);
     }
 
     private function formatStudent(Student $student): array

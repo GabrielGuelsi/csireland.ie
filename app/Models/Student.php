@@ -15,13 +15,14 @@ class Student extends Model
         'status', 'priority', 'system',
         'exam_date', 'exam_result', 'payment_status', 'visa_status',
         'visa_expiry_date', 'date_of_birth',
-        'form_submitted_at', 'first_contacted_at', 'gift_received_at',
+        'form_submitted_at', 'first_contacted_at', 'last_contacted_at', 'gift_received_at',
     ];
 
     protected $casts = [
-        'form_submitted_at'  => 'datetime',
-        'first_contacted_at' => 'datetime',
-        'gift_received_at'   => 'datetime',
+        'form_submitted_at'   => 'datetime',
+        'first_contacted_at'  => 'datetime',
+        'last_contacted_at'   => 'datetime',
+        'gift_received_at'    => 'datetime',
         'exam_date'          => 'date',
         'visa_expiry_date'   => 'date',
         'date_of_birth'      => 'date',

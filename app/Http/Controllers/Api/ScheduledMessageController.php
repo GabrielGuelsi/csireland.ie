@@ -78,6 +78,8 @@ class ScheduledMessageController extends Controller
             'sent_at'     => now(),
         ]);
 
+        $student->update(['last_contacted_at' => now()]);
+
         return response()->json(['ok' => true]);
     }
 }

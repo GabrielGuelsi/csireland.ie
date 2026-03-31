@@ -32,7 +32,8 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::patch('students/{student}/payment',       [StudentController::class, 'updatePayment']);
     Route::patch('students/{student}/visa',          [StudentController::class, 'updateVisa']);
     Route::patch('students/{student}/priority',      [StudentController::class, 'updatePriority']);
-    Route::patch('students/{student}/gift-received', [StudentController::class, 'markGiftReceived']);
+    Route::patch('students/{student}/gift-received',   [StudentController::class, 'markGiftReceived']);
+    Route::patch('students/{student}/last-contacted',  [StudentController::class, 'updateLastContacted']);
 
     // Notes
     Route::post('notes',              [NoteController::class, 'store']);

@@ -206,6 +206,18 @@ class StudentController extends Controller
         return response()->json(['ok' => true, 'gift_received_at' => $student->gift_received_at->toIso8601String()]);
     }
 
+    // PATCH /api/students/{id}/last-contacted
+    public function updateLastContacted(Request $request, Student $student)
+    {
+        if (!$request->user()->isAdmin() && $student->assigned_cs_agent_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        $student->update(['last_contacted_at' => now()]);
+
+        return response()->json(['ok' => true, 'last_contacted_at' => $student->last_contacted_at->toIso8601String()]);
+    }
+
     private function formatStudent(Student $student): array
     {
         $sla = $this->sla->getStatus($student);
@@ -239,6 +251,7 @@ class StudentController extends Controller
             'gift_received_at'        => $student->gift_received_at?->toIso8601String(),
             'form_submitted_at'       => $student->form_submitted_at?->toIso8601String(),
             'first_contacted_at'      => $student->first_contacted_at?->toIso8601String(),
+            'last_contacted_at'       => $student->last_contacted_at?->toIso8601String(),
             'sla_overdue'             => $sla['overdue'],
             'sla_days_remaining'      => $sla['days_remaining'],
             'notes'                   => $student->relationLoaded('notes')

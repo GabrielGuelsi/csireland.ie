@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\MessageLog;
+use App\Models\Student;
 use Illuminate\Http\Request;
 
 class MessageLogController extends Controller
@@ -24,6 +25,8 @@ class MessageLogController extends Controller
             'channel'     => $request->input('channel', 'whatsapp'),
             'sent_at'     => now(),
         ]);
+
+        Student::where('id', $request->student_id)->update(['last_contacted_at' => now()]);
 
         return response()->json(['ok' => true], 201);
     }

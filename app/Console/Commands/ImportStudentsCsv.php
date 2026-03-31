@@ -102,7 +102,7 @@ class ImportStudentsCsv extends Command
 
             Student::create([
                 'name'                    => $name,
-                'email'                   => $get('Student email') ?: null,
+                'email'                   => $get('Student email') ?: 'unknown_' . uniqid() . '@import.local',
                 'whatsapp_phone'          => null,
                 'product_type'            => $productType,
                 'product_type_other'      => $productOther,

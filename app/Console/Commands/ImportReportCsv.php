@@ -66,11 +66,16 @@ class ImportReportCsv extends Command
         // ── Parse CSV ────────────────────────────────────────────────────────
         $handle = fopen($file, 'r');
 
+        $decode = fn(array $row) => array_map(
+            fn($v) => mb_convert_encoding($v, 'UTF-8', 'ISO-8859-1'),
+            $row
+        );
+
         // Row 1 is a date/title row — skip it
         fgetcsv($handle, 0, ';');
 
         // Row 2 is the real header
-        $header = fgetcsv($handle, 0, ';');
+        $header = $decode(fgetcsv($handle, 0, ';'));
         $cols   = array_flip(array_map('trim', $header));
 
         $imported = 0;
@@ -79,6 +84,7 @@ class ImportReportCsv extends Command
         $this->info('Importing active students...');
 
         while (($row = fgetcsv($handle, 0, ';')) !== false) {
+            $row = $decode($row);
             $get = fn(string $col) => isset($cols[$col])
                 ? trim($row[$cols[$col]] ?? '')
                 : '';

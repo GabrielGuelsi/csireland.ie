@@ -72,7 +72,28 @@ $priorityBadge = ['high' => 'danger', 'medium' => 'warning', 'low' => 'secondary
                         — <span class="badge badge-secondary">{{ ucfirst($student->exam_result) }}</span>
                     </dd>
                     @endif
-                    @if($student->visa_expiry_date)
+                    @if($student->visa_type)
+                    <dt class="col-sm-4">Visa Type</dt>
+                    <dd class="col-sm-8">
+                        <span class="badge badge-{{ $student->visa_type === 'eu_passport' ? 'success' : 'info' }}">
+                            {{ Student::visaTypeLabel($student->visa_type) }}
+                        </span>
+                    </dd>
+                    @endif
+                    @if($student->visa_expiry_date && $student->visa_type !== 'eu_passport')
+                    <dt class="col-sm-4">Visa Expiry</dt>
+                    <dd class="col-sm-8">
+                        {{ $student->visa_expiry_date->format('d M Y') }}
+                        @php $daysLeft = now()->diffInDays($student->visa_expiry_date, false); @endphp
+                        @if($daysLeft <= 0)
+                        <span class="badge badge-danger">Expired!</span>
+                        @elseif($daysLeft <= 30)
+                        <span class="badge badge-danger">{{ $daysLeft }}d remaining</span>
+                        @elseif($daysLeft <= 60)
+                        <span class="badge badge-warning">{{ $daysLeft }}d remaining</span>
+                        @endif
+                    </dd>
+                    @elseif($student->visa_expiry_date && !$student->visa_type)
                     <dt class="col-sm-4">Visa Expiry</dt>
                     <dd class="col-sm-8">
                         {{ $student->visa_expiry_date->format('d M Y') }}

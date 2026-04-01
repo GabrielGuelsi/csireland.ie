@@ -103,6 +103,16 @@ $statusOptions = [
     </div>
 
     <div class="form-group">
+        <label>Visa Type</label>
+        <select name="visa_type" id="visa_type_select" class="form-control">
+            <option value="">— not set —</option>
+            @foreach(['eu_passport' => 'EU Passport', 'stamp_2' => 'Stamp 2', 'stamp_1_4' => 'Stamp 1/4'] as $val => $label)
+            <option value="{{ $val }}" {{ old('visa_type', $s?->visa_type) === $val ? 'selected' : '' }}>{{ $label }}</option>
+            @endforeach
+        </select>
+    </div>
+
+    <div class="form-group" id="visa_expiry_wrap">
         <label>Visa Expiry Date</label>
         <input type="date" name="visa_expiry_date" class="form-control"
                value="{{ old('visa_expiry_date', $s?->visa_expiry_date?->toDateString()) }}">

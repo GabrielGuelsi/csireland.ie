@@ -14,7 +14,7 @@ class Student extends Model
         'sales_consultant_id', 'assigned_cs_agent_id',
         'status', 'priority', 'system',
         'exam_date', 'exam_result', 'payment_status', 'visa_status',
-        'visa_expiry_date', 'date_of_birth',
+        'visa_type', 'visa_expiry_date', 'date_of_birth',
         'form_submitted_at', 'first_contacted_at', 'last_contacted_at', 'gift_received_at',
     ];
 
@@ -81,6 +81,16 @@ class Student extends Model
             'cancelled'                 => 'Cancelled',
             'concluded'                 => 'Concluded',
             default                     => ucfirst(str_replace('_', ' ', $status)),
+        };
+    }
+
+    public static function visaTypeLabel(string $type): string
+    {
+        return match($type) {
+            'eu_passport' => 'EU Passport',
+            'stamp_2'     => 'Stamp 2',
+            'stamp_1_4'   => 'Stamp 1/4',
+            default       => $type,
         };
     }
 

@@ -175,8 +175,13 @@ class StudentController extends Controller
             abort(403);
         }
 
-        $request->validate(['visa_status' => 'required|in:not_started,material_sent,answered,complete']);
-        $student->update(['visa_status' => $request->visa_status]);
+        $request->validate([
+            'visa_status'      => 'nullable|in:not_started,material_sent,answered,complete',
+            'visa_type'        => 'nullable|in:eu_passport,stamp_2,stamp_1_4',
+            'visa_expiry_date' => 'nullable|date',
+        ]);
+
+        $student->update($request->only('visa_status', 'visa_type', 'visa_expiry_date'));
 
         return response()->json(['ok' => true]);
     }
@@ -254,6 +259,7 @@ class StudentController extends Controller
             'exam_result'             => $student->exam_result,
             'payment_status'          => $student->payment_status,
             'visa_status'             => $student->visa_status,
+            'visa_type'               => $student->visa_type,
             'visa_expiry_date'        => $student->visa_expiry_date?->toDateString(),
             'date_of_birth'           => $student->date_of_birth?->toDateString(),
             'gift_received_at'        => $student->gift_received_at?->toIso8601String(),

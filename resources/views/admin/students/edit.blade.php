@@ -19,3 +19,14 @@
         </div>
     </div>
 @stop
+
+@section('js')
+<script>
+function toggleVisaExpiry() {
+    var type = document.getElementById('visa_type_select').value;
+    document.getElementById('visa_expiry_wrap').style.display = type === 'eu_passport' ? 'none' : '';
+}
+document.getElementById('visa_type_select').addEventListener('change', toggleVisaExpiry);
+toggleVisaExpiry();
+</script>
+@stop

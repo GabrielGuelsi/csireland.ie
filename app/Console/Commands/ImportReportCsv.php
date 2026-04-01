@@ -110,10 +110,8 @@ class ImportReportCsv extends Command
 
             $email = $get('E-MAIL') ?: 'unknown_' . uniqid() . '@import.local';
 
-            $consultantName = $get('CONSULTOR') ?: null;
-            $assignmentData = $consultantName
-                ? $assignment->resolve($consultantName)
-                : ['sales_consultant_id' => null, 'assigned_cs_agent_id' => null];
+            $consultantName = $get('CONSULTOR') ?: 'Unknown';
+            $assignmentData = $assignment->resolve($consultantName);
 
             $productRaw  = strtolower($get('TIPO DE CURSO'));
             $productType = null;

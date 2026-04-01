@@ -23,7 +23,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('students',                               [StudentController::class, 'index'])->name('students.index');
     Route::get('students/{student}',                     [StudentController::class, 'show'])->name('students.show');
     Route::get('students/{student}/edit',                [StudentController::class, 'edit'])->name('students.edit');
-    Route::put('students/{student}',                     [StudentController::class, 'update'])->name('students.update');
+    Route::match(['PUT','PATCH'], 'students/{student}',  [StudentController::class, 'update'])->name('students.update');
     Route::patch('students/{student}/reassign',          [StudentController::class, 'reassign'])->name('students.reassign');
     Route::post('students/bulk-reassign',                [StudentController::class, 'bulkReassign'])->name('students.bulkReassign');
     Route::patch('students/{student}/gift-received',     [StudentController::class, 'markGiftReceived'])->name('students.markGiftReceived');

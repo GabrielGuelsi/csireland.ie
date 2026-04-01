@@ -90,6 +90,30 @@ use App\Models\Student;
     </div>
     @endif
 
+    @if($followupsDue->isNotEmpty())
+    <div class="col-md-3">
+        <div class="card card-warning">
+            <div class="card-header"><h3 class="card-title">📅 Follow-ups due ({{ $followupsDue->count() }})</h3></div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    @foreach($followupsDue->take(5) as $s)
+                    <li class="list-group-item py-1">
+                        <a href="{{ route('admin.students.show', $s) }}">{{ $s->name }}</a>
+                        @if($s->next_followup_note)
+                        <small class="text-muted d-block">{{ $s->next_followup_note }}</small>
+                        @endif
+                        <small class="text-muted d-block">{{ $s->assignedAgent?->name ?? 'Unassigned' }}</small>
+                    </li>
+                    @endforeach
+                    @if($followupsDue->count() > 5)
+                    <li class="list-group-item py-1 text-muted">+ {{ $followupsDue->count() - 5 }} more…</li>
+                    @endif
+                </ul>
+            </div>
+        </div>
+    </div>
+    @endif
+
     @if($pendingMessages->isNotEmpty())
     <div class="col-md-3">
         <div class="card card-primary">

@@ -83,6 +83,8 @@ class StudentController extends Controller
             'exam_result'           => 'nullable|in:pending,pass,fail',
             'pending_documents'     => 'nullable|string|max:5000',
             'observations'          => 'nullable|string|max:5000',
+            'next_followup_date'    => 'nullable|date',
+            'next_followup_note'    => 'nullable|string|max:500',
         ]);
 
         $student->update($request->only([
@@ -91,6 +93,7 @@ class StudentController extends Controller
             'status', 'priority', 'system',
             'visa_type', 'visa_expiry_date', 'exam_date', 'exam_result',
             'pending_documents', 'observations',
+            'next_followup_date', 'next_followup_note',
         ]));
 
         return redirect()->route('admin.students.show', $student)->with('success', 'Student updated.');

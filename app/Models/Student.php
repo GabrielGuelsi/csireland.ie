@@ -16,6 +16,7 @@ class Student extends Model
         'exam_date', 'exam_result', 'payment_status', 'visa_status',
         'visa_type', 'visa_expiry_date', 'date_of_birth',
         'form_submitted_at', 'first_contacted_at', 'last_contacted_at', 'gift_received_at',
+        'next_followup_date', 'next_followup_note',
     ];
 
     protected $casts = [
@@ -23,9 +24,10 @@ class Student extends Model
         'first_contacted_at'  => 'datetime',
         'last_contacted_at'   => 'datetime',
         'gift_received_at'    => 'datetime',
-        'exam_date'          => 'date',
-        'visa_expiry_date'   => 'date',
-        'date_of_birth'      => 'date',
+        'exam_date'           => 'date',
+        'visa_expiry_date'    => 'date',
+        'date_of_birth'       => 'date',
+        'next_followup_date'  => 'date',
         'sales_price'        => 'decimal:2',
         'sales_price_scholarship' => 'decimal:2',
     ];

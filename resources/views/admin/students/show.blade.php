@@ -107,6 +107,22 @@ $priorityBadge = ['high' => 'danger', 'medium' => 'warning', 'low' => 'secondary
                         @endif
                     </dd>
                     @endif
+                    @if($student->next_followup_date)
+                    @php $followupDays = now()->diffInDays($student->next_followup_date, false); @endphp
+                    <dt class="col-sm-4">Next Follow-up</dt>
+                    <dd class="col-sm-8">
+                        @if($followupDays < 0)
+                        <span class="text-danger font-weight-bold">{{ $student->next_followup_date->format('d M Y') }} — overdue by {{ abs($followupDays) }}d</span>
+                        @elseif($followupDays === 0)
+                        <span class="text-warning font-weight-bold">{{ $student->next_followup_date->format('d M Y') }} — today!</span>
+                        @else
+                        {{ $student->next_followup_date->format('d M Y') }} <span class="text-muted">in {{ $followupDays }}d</span>
+                        @endif
+                        @if($student->next_followup_note)
+                        <small class="d-block text-muted">{{ $student->next_followup_note }}</small>
+                        @endif
+                    </dd>
+                    @endif
                     @if($student->pending_documents)
                     <dt class="col-sm-4">Pending Docs</dt><dd class="col-sm-8 text-warning">{{ $student->pending_documents }}</dd>
                     @endif

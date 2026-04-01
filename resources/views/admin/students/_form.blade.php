@@ -137,6 +137,18 @@ $statusOptions = [
 </div>
 
 <div class="form-group">
+    <label>Next Follow-up Date</label>
+    <input type="date" name="next_followup_date" class="form-control"
+           value="{{ old('next_followup_date', $s?->next_followup_date?->toDateString()) }}">
+</div>
+
+<div class="form-group">
+    <label>Follow-up Note <small class="text-muted">(e.g. "Exam booking", "Check documents")</small></label>
+    <input type="text" name="next_followup_note" class="form-control" maxlength="500"
+           value="{{ old('next_followup_note', $s?->next_followup_note) }}" placeholder="Reason for follow-up…">
+</div>
+
+<div class="form-group">
     <label>Pending Documents</label>
     <textarea name="pending_documents" class="form-control" rows="2">{{ old('pending_documents', $s?->pending_documents) }}</textarea>
 </div>

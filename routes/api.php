@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\ScheduledMessageController;
 use App\Http\Controllers\Api\SlaController;
 use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\TemplateController;
+use App\Http\Controllers\Api\TodayTasksController;
 use App\Http\Controllers\Api\WebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -34,6 +35,10 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::patch('students/{student}/priority',      [StudentController::class, 'updatePriority']);
     Route::patch('students/{student}/gift-received',   [StudentController::class, 'markGiftReceived']);
     Route::patch('students/{student}/last-contacted',  [StudentController::class, 'updateLastContacted']);
+    Route::patch('students/{student}/followup',        [StudentController::class, 'updateFollowup']);
+
+    // Today's tasks (follow-ups + birthdays + exams)
+    Route::get('today-tasks', [TodayTasksController::class, 'index']);
 
     // Notes
     Route::post('notes',              [NoteController::class, 'store']);

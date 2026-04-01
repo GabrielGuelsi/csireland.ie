@@ -97,6 +97,19 @@ class SendDailyAlertsJob implements ShouldQueue
                 }
             }
 
+            // Follow-up due today
+            foreach ($students as $student) {
+                if ($student->next_followup_date && $student->next_followup_date->isToday()) {
+                    $note = $student->next_followup_note ? " — {$student->next_followup_note}" : '';
+                    Notification::create([
+                        'user_id'    => $agent->id,
+                        'type'       => 'followup_due',
+                        'student_id' => $student->id,
+                        'data'       => ['message' => "📅 Follow-up due: {$student->name}{$note}"],
+                    ]);
+                }
+            }
+
             // Gift ready alerts (concluded but gift not received)
             $giftStudents = Student::where('assigned_cs_agent_id', $agent->id)
                 ->where('status', 'concluded')

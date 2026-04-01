@@ -72,6 +72,13 @@ class DashboardController extends Controller
             ->filter(fn($s) => $sla->getStatus($s)['overdue'])
             ->values();
 
+        // Follow-ups due today or overdue
+        $followupsDue = Student::whereNotNull('next_followup_date')
+            ->whereDate('next_followup_date', '<=', $today)
+            ->whereNotIn('status', ['cancelled', 'concluded'])
+            ->with('assignedAgent')
+            ->get();
+
         // Recent stage changes
         $recentActivity = StudentStageLog::with(['student', 'changedBy'])
             ->orderByDesc('changed_at')
@@ -81,7 +88,7 @@ class DashboardController extends Controller
         return view('admin.dashboard', compact(
             'agentRows', 'statusTotals', 'recentActivity', 'statuses',
             'birthdaysToday', 'examsToday', 'overdueFirstContact', 'pendingMessages',
-            'slaBreaches'
+            'slaBreaches', 'followupsDue'
         ));
     }
 

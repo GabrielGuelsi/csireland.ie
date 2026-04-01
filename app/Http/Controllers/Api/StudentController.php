@@ -186,6 +186,23 @@ class StudentController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    // PATCH /api/students/{id}/followup
+    public function updateFollowup(Request $request, Student $student)
+    {
+        if (!$request->user()->isAdmin() && $student->assigned_cs_agent_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        $request->validate([
+            'next_followup_date' => 'nullable|date',
+            'next_followup_note' => 'nullable|string|max:500',
+        ]);
+
+        $student->update($request->only('next_followup_date', 'next_followup_note'));
+
+        return response()->json(['ok' => true]);
+    }
+
     // PATCH /api/students/{id}/priority
     public function updatePriority(Request $request, Student $student)
     {
@@ -263,6 +280,8 @@ class StudentController extends Controller
             'visa_expiry_date'        => $student->visa_expiry_date?->toDateString(),
             'date_of_birth'           => $student->date_of_birth?->toDateString(),
             'gift_received_at'        => $student->gift_received_at?->toIso8601String(),
+            'next_followup_date'      => $student->next_followup_date?->toDateString(),
+            'next_followup_note'      => $student->next_followup_note,
             'form_submitted_at'       => $student->form_submitted_at?->toIso8601String(),
             'first_contacted_at'      => $student->first_contacted_at?->toIso8601String(),
             'last_contacted_at'       => $student->last_contacted_at?->toIso8601String(),

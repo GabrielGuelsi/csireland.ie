@@ -69,6 +69,27 @@ use App\Models\Student;
     </div>
     @endif
 
+    @if($slaBreaches->isNotEmpty())
+    <div class="col-md-3">
+        <div class="card card-danger">
+            <div class="card-header"><h3 class="card-title">🚨 SLA breaches ({{ $slaBreaches->count() }})</h3></div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    @foreach($slaBreaches->take(5) as $s)
+                    <li class="list-group-item py-1">
+                        <a href="{{ route('admin.students.show', $s) }}">{{ $s->name }}</a>
+                        <small class="text-muted d-block">{{ Student::statusLabel($s->status) }} — {{ $s->assignedAgent?->name ?? 'Unassigned' }}</small>
+                    </li>
+                    @endforeach
+                    @if($slaBreaches->count() > 5)
+                    <li class="list-group-item py-1 text-muted">+ {{ $slaBreaches->count() - 5 }} more…</li>
+                    @endif
+                </ul>
+            </div>
+        </div>
+    </div>
+    @endif
+
     @if($pendingMessages->isNotEmpty())
     <div class="col-md-3">
         <div class="card card-primary">

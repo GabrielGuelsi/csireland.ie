@@ -65,6 +65,13 @@ class DashboardController extends Controller
             ->with(['student.assignedAgent', 'template', 'sequence'])
             ->get();
 
+        // SLA breaches (real-time: check all active students)
+        $slaBreaches = Student::whereNotIn('status', ['cancelled', 'concluded'])
+            ->with('assignedAgent')
+            ->get()
+            ->filter(fn($s) => $sla->getStatus($s)['overdue'])
+            ->values();
+
         // Recent stage changes
         $recentActivity = StudentStageLog::with(['student', 'changedBy'])
             ->orderByDesc('changed_at')
@@ -73,7 +80,8 @@ class DashboardController extends Controller
 
         return view('admin.dashboard', compact(
             'agentRows', 'statusTotals', 'recentActivity', 'statuses',
-            'birthdaysToday', 'examsToday', 'overdueFirstContact', 'pendingMessages'
+            'birthdaysToday', 'examsToday', 'overdueFirstContact', 'pendingMessages',
+            'slaBreaches'
         ));
     }
 

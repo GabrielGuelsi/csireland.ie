@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AgentController;
+use App\Http\Controllers\Admin\AlertRuleController;
 use App\Http\Controllers\Admin\AssignmentRuleController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MessageSequenceController;
@@ -50,6 +51,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     // Message Sequences
     Route::resource('message-sequences', MessageSequenceController::class)->names('message-sequences')->except(['show']);
+
+    // Alert Rules
+    Route::resource('alert-rules', AlertRuleController::class)->names('alert-rules');
+    Route::patch('alert-rules/{alertRule}/toggle', [AlertRuleController::class, 'toggle'])->name('alert-rules.toggle');
 
     // Reports
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');

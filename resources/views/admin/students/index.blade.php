@@ -47,6 +47,7 @@ $priorityBadge = ['high' => 'danger', 'medium' => 'warning', 'low' => 'secondary
             </select>
             <select name="agent" class="form-control mr-2">
                 <option value="">All agents</option>
+                <option value="unassigned" {{ request('agent') === 'unassigned' ? 'selected' : '' }}>⚠ Unassigned</option>
                 @foreach($agents as $a)
                 <option value="{{ $a->id }}" {{ request('agent') == $a->id ? 'selected' : '' }}>{{ $a->name }}</option>
                 @endforeach
@@ -56,6 +57,24 @@ $priorityBadge = ['high' => 'danger', 'medium' => 'warning', 'low' => 'secondary
         </form>
     </div>
 </div>
+
+@if(request('agent') === 'unassigned' && $students->total() > 0)
+<div class="callout callout-warning">
+    <strong>⚠ {{ $students->total() }} unassigned student(s) found.</strong>
+    Reassign all of them to an agent:
+    <form method="POST" action="{{ route('admin.students.bulkReassign') }}" class="form-inline mt-2" style="gap:6px"
+          onsubmit="return confirm('Reassign all {{ $students->total() }} unassigned students?')">
+        @csrf
+        <select name="agent_id" class="form-control mr-2" required>
+            <option value="">— pick agent —</option>
+            @foreach($agents as $a)
+            <option value="{{ $a->id }}">{{ $a->name }}</option>
+            @endforeach
+        </select>
+        <button type="submit" class="btn btn-warning">Reassign All</button>
+    </form>
+</div>
+@endif
 
 <div class="card">
     <div class="card-body table-responsive p-0">

@@ -29,7 +29,11 @@ class StudentController extends Controller
             $query->where('priority', $request->priority);
         }
         if ($request->filled('agent')) {
-            $query->where('assigned_cs_agent_id', $request->agent);
+            if ($request->agent === 'unassigned') {
+                $query->whereNull('assigned_cs_agent_id');
+            } else {
+                $query->where('assigned_cs_agent_id', $request->agent);
+            }
         }
 
         $students = $query->latest()->paginate(20)->withQueryString();
@@ -73,6 +77,7 @@ class StudentController extends Controller
             'status'                => "required|in:{$validStatuses}",
             'priority'              => 'nullable|in:high,medium,low',
             'system'                => 'nullable|in:edvisor,cigo',
+            'visa_type'             => 'nullable|in:eu_passport,stamp_2,stamp_1_4',
             'visa_expiry_date'      => 'nullable|date',
             'exam_date'             => 'nullable|date',
             'exam_result'           => 'nullable|in:pending,pass,fail',
@@ -84,7 +89,7 @@ class StudentController extends Controller
             'name', 'email', 'whatsapp_phone', 'date_of_birth',
             'course', 'university', 'intake',
             'status', 'priority', 'system',
-            'visa_expiry_date', 'exam_date', 'exam_result',
+            'visa_type', 'visa_expiry_date', 'exam_date', 'exam_result',
             'pending_documents', 'observations',
         ]));
 
@@ -103,5 +108,16 @@ class StudentController extends Controller
     {
         $student->update(['gift_received_at' => now()]);
         return back()->with('success', 'Gift marked as received.');
+    }
+
+    public function bulkReassign(Request $request)
+    {
+        $request->validate(['agent_id' => 'required|exists:users,id']);
+
+        $count = Student::whereNull('assigned_cs_agent_id')
+            ->update(['assigned_cs_agent_id' => $request->agent_id]);
+
+        return redirect()->route('admin.students.index')
+            ->with('success', "{$count} students reassigned successfully.");
     }
 }

@@ -17,6 +17,7 @@ class Student extends Model
         'visa_type', 'visa_expiry_date', 'date_of_birth',
         'form_submitted_at', 'first_contacted_at', 'last_contacted_at', 'gift_received_at',
         'next_followup_date', 'next_followup_note',
+        'source',
     ];
 
     protected $casts = [

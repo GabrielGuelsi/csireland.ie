@@ -55,6 +55,7 @@ class DashboardController extends Controller
         // First contact overdue (no first_contacted_at after 3+ working days)
         $overdueFirstContact = Student::whereNull('first_contacted_at')
             ->whereNotIn('status', ['cancelled'])
+            ->where('source', 'form')
             ->with('assignedAgent')
             ->get()
             ->filter(fn($s) => $this->workingDaysSince($s->form_submitted_at) >= 3)

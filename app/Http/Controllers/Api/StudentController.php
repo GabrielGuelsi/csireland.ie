@@ -282,6 +282,7 @@ class StudentController extends Controller
             'gift_received_at'        => $student->gift_received_at?->toIso8601String(),
             'next_followup_date'      => $student->next_followup_date?->toDateString(),
             'next_followup_note'      => $student->next_followup_note,
+            'source'                  => $student->source,
             'form_submitted_at'       => $student->form_submitted_at?->toIso8601String(),
             'first_contacted_at'      => $student->first_contacted_at?->toIso8601String(),
             'last_contacted_at'       => $student->last_contacted_at?->toIso8601String(),

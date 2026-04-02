@@ -161,6 +161,7 @@ class WebhookController extends Controller
             'sales_consultant_id'     => $assignment['sales_consultant_id'],
             'assigned_cs_agent_id'    => $assignment['assigned_cs_agent_id'],
             'status'                  => 'waiting_initial_documents',
+            'source'                  => 'form',
             'form_submitted_at'       => now(),
         ]);
 

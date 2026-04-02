@@ -28,6 +28,8 @@ class WebhookController extends Controller
             $normalised[trim($key)] = $value;
         }
 
+        \Log::info('Webhook payload keys: ' . implode(' | ', array_keys($normalised)));
+
         // Helper: extract first array value, trim, treat "" as null
         $get = function (string $key) use ($normalised): ?string {
             $val = $normalised[$key][0] ?? null;
@@ -48,7 +50,13 @@ class WebhookController extends Controller
         $priceScholarship = $get('Sales price with scholarship (If Applicable)');
         $pendingDocs      = $get('Pending documents and add informations');
         $reappRaw         = $get('If REAPPLICATION:');
-        $phoneRaw         = $get('Student WhatsApp number');
+        $phoneRaw         = $get('Student WhatsApp number')
+                        ?? $get('WhatsApp number')
+                        ?? $get('WhatsApp Number')
+                        ?? $get('Student WhatsApp Number')
+                        ?? $get('Phone number')
+                        ?? $get('Phone Number')
+                        ?? $get('Student phone number');
         $dobRaw           = $get('Date of Birth');
         $visaExpiryRaw    = $get('Visa expiry');
 

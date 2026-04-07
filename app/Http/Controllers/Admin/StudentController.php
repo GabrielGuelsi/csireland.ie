@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\SalesConsultant;
 use App\Models\ScheduledStudentMessage;
 use App\Models\Student;
 use App\Models\User;
@@ -55,6 +56,60 @@ class StudentController extends Controller
             ->get();
 
         return view('admin.students.show', compact('student', 'sla', 'agents', 'scheduledMessages'));
+    }
+
+    public function create()
+    {
+        $agents = User::where('role', 'cs_agent')->where('active', true)->get();
+        $salesConsultants = SalesConsultant::orderBy('name')->get();
+
+        return view('admin.students.create', compact('agents', 'salesConsultants'));
+    }
+
+    public function store(Request $request)
+    {
+        $validStatuses = implode(',', Student::allStatuses());
+
+        $request->validate([
+            'name'                  => 'required|string|max:255',
+            'email'                 => 'nullable|email|max:255',
+            'whatsapp_phone'        => 'nullable|string|max:30',
+            'date_of_birth'         => 'nullable|date',
+            'course'                => 'nullable|string|max:255',
+            'university'            => 'nullable|string|max:255',
+            'intake'                => 'nullable|in:jan,feb,may,jun,sep',
+            'status'                => "required|in:{$validStatuses}",
+            'priority'              => 'nullable|in:high,medium,low',
+            'system'                => 'nullable|in:edvisor,cigo',
+            'visa_type'             => 'nullable|in:eu_passport,stamp_2,stamp_1_4',
+            'visa_expiry_date'      => 'nullable|date',
+            'exam_date'             => 'nullable|date',
+            'exam_result'           => 'nullable|in:pending,pass,fail',
+            'pending_documents'     => 'nullable|string|max:5000',
+            'observations'          => 'nullable|string|max:5000',
+            'next_followup_date'    => 'nullable|date',
+            'next_followup_note'    => 'nullable|string|max:500',
+            'sales_consultant_id'   => 'nullable|exists:sales_consultants,id',
+            'assigned_cs_agent_id'  => 'nullable|exists:users,id',
+        ]);
+
+        $student = Student::create(array_merge(
+            $request->only([
+                'name', 'email', 'whatsapp_phone', 'date_of_birth',
+                'course', 'university', 'intake',
+                'status', 'priority', 'system',
+                'visa_type', 'visa_expiry_date', 'exam_date', 'exam_result',
+                'pending_documents', 'observations',
+                'next_followup_date', 'next_followup_note',
+                'sales_consultant_id', 'assigned_cs_agent_id',
+            ]),
+            [
+                'source'            => 'manual',
+                'form_submitted_at' => now(),
+            ]
+        ));
+
+        return redirect()->route('admin.students.show', $student)->with('success', 'Student created.');
     }
 
     public function edit(Student $student)

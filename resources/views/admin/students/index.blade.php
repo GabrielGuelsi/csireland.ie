@@ -3,7 +3,10 @@
 @section('title', 'Students')
 
 @section('content_header')
-    <h1>Students</h1>
+    <div class="d-flex justify-content-between align-items-center">
+        <h1>Students</h1>
+        <a href="{{ route('admin.students.create') }}" class="btn btn-primary">+ Add Student</a>
+    </div>
 @stop
 
 @section('content')
@@ -13,12 +16,14 @@ use App\Models\Student;
 
 $statusBadge = [
     'waiting_initial_documents' => 'secondary',
+    'first_contact_made'        => 'primary',
     'waiting_offer_letter'      => 'info',
     'waiting_english_exam'      => 'info',
     'waiting_duolingo'          => 'info',
     'waiting_reapplication'     => 'warning',
     'waiting_college_documents' => 'warning',
     'waiting_college_response'  => 'warning',
+    'waiting_final_letter'      => 'info',
     'waiting_payment'           => 'danger',
     'waiting_student_response'  => 'warning',
     'cancelled'                 => 'dark',

@@ -50,12 +50,14 @@
 @php
 $statusLabels = [
     'waiting_initial_documents' => 'Waiting for Documents (Initial)',
+    'first_contact_made'        => 'First Contact Made',
     'waiting_offer_letter'      => 'Waiting for Offer Letter',
     'waiting_english_exam'      => 'Waiting for English Exam',
     'waiting_duolingo'          => 'Waiting for Duolingo',
     'waiting_reapplication'     => 'Waiting for Reapplication',
     'waiting_college_documents' => 'Waiting for Documents (College)',
     'waiting_college_response'  => 'Waiting for College Response',
+    'waiting_final_letter'      => 'Waiting for Final Letter',
     'waiting_payment'           => 'Waiting for Payment',
     'waiting_student_response'  => 'Waiting for Student Response',
     'cancelled'                 => 'Cancelled',

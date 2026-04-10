@@ -28,6 +28,7 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::get('students/search',       [StudentController::class, 'search']);
     Route::get('students/pipeline',     [StudentController::class, 'pipeline']);
     Route::post('students/{student}/link-phone', [StudentController::class, 'linkPhone']);
+    Route::post('students/{student}/link-email', [StudentController::class, 'linkEmail']);
     Route::patch('students/{student}/stage',         [StudentController::class, 'updateStage']);
     Route::patch('students/{student}/exam',          [StudentController::class, 'updateExam']);
     Route::patch('students/{student}/payment',       [StudentController::class, 'updatePayment']);

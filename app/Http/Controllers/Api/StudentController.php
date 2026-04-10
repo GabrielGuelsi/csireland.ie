@@ -78,6 +78,19 @@ class StudentController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    public function linkEmail(Request $request, Student $student)
+    {
+        if (!$request->user()->isAdmin() && $student->assigned_cs_agent_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        $request->validate(['email' => 'required|email|max:255']);
+
+        $student->update(['email' => $request->email]);
+
+        return response()->json(['ok' => true]);
+    }
+
     // GET /api/students/pipeline
     public function pipeline(Request $request)
     {

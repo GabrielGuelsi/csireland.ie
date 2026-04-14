@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AgentController;
 use App\Http\Controllers\Admin\AlertRuleController;
 use App\Http\Controllers\Admin\AssignmentRuleController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\DuplicateController;
 use App\Http\Controllers\Admin\MessageSequenceController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SalesConsultantController;
@@ -19,6 +20,10 @@ Route::get('/privacy', fn() => view('privacy'))->name('privacy');
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
 
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Duplicates
+    Route::get('duplicates',        [DuplicateController::class, 'index'])->name('duplicates.index');
+    Route::post('duplicates/merge', [DuplicateController::class, 'merge'])->name('duplicates.merge');
 
     // Students
     Route::get('students',                               [StudentController::class, 'index'])->name('students.index');

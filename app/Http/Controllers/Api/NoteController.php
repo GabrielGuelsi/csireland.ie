@@ -25,7 +25,7 @@ class NoteController extends Controller
         return response()->json($notes->map(fn($n) => [
             'id'         => $n->id,
             'body'       => $n->body,
-            'author'     => $n->author?->name,
+            'author'     => $n->author?->name ?? 'System',
             'created_at' => $n->created_at->toIso8601String(),
         ]));
     }

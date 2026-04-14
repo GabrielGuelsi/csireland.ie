@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Note;
 use App\Models\Notification;
 use App\Models\Student;
 use App\Services\AssignmentService;
@@ -142,8 +143,8 @@ class WebhookController extends Controller
         // 9. Normalise phone
         $whatsappPhone = PhoneNormaliser::normalise($phoneRaw);
 
-        // 10. Create Student
-        $student = Student::create([
+        // 10. Build the "new student" payload (used if no match is found OR for reapplications)
+        $newStudentData = [
             'name'                    => $studentName ?? 'Unknown',
             'email'                   => $studentEmail ?? '',
             'whatsapp_phone'          => $whatsappPhone,
@@ -163,17 +164,90 @@ class WebhookController extends Controller
             'status'                  => 'waiting_initial_documents',
             'source'                  => 'form',
             'form_submitted_at'       => now(),
-        ]);
+        ];
 
-        // 11. Notify assigned agent
-        if ($assignment['assigned_cs_agent_id']) {
-            Notification::create([
-                'user_id'    => $assignment['assigned_cs_agent_id'],
-                'type'       => 'new_assignment',
-                'student_id' => $student->id,
-            ]);
+        // 11. Try to find an existing student (phone first, then name)
+        $existing = null;
+        if ($whatsappPhone) {
+            $existing = Student::where('whatsapp_phone', $whatsappPhone)->first();
+        }
+        if (!$existing && $studentName) {
+            $existing = Student::whereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower(trim($studentName))])->first();
         }
 
-        return response()->json(['ok' => true], 200);
+        // 12. No match → create as today (normal flow)
+        if (!$existing) {
+            $student = Student::create($newStudentData);
+            $this->notifyAgent($assignment['assigned_cs_agent_id'], $student->id);
+            return response()->json(['ok' => true, 'action' => 'created'], 200);
+        }
+
+        // 13. Match found → route based on product type
+        $productLabel  = $productRaw ?? ucfirst(str_replace('_', ' ', $productType ?? 'unknown'));
+        $priceStr      = $price ?: '—';
+        $pendingStr    = $pendingDocs ? " Details: {$pendingDocs}" : '';
+
+        // 13a. Reapplication — honour reapplication_action
+        if ($productType === 'reapplication') {
+            if ($reappAction === 'cancel_previous') {
+                $existing->update(['status' => 'cancelled']);
+                $newStudent = Student::create($newStudentData);
+                $this->appendSystemNote($existing, "Cancelled due to reapplication — see new student #{$newStudent->id}.");
+                $this->appendSystemNote($newStudent, "Reapplication — replaces cancelled student #{$existing->id}.");
+                $this->notifyAgent($newStudent->assigned_cs_agent_id, $newStudent->id);
+                return response()->json(['ok' => true, 'action' => 'reapplication_cancel_previous'], 200);
+            }
+
+            if ($reappAction === 'keep_previous') {
+                $newStudent = Student::create($newStudentData);
+                $this->appendSystemNote($existing, "Reapplication submitted — see new student #{$newStudent->id}.");
+                $this->appendSystemNote($newStudent, "Reapplication — previous student #{$existing->id}.");
+                $this->notifyAgent($newStudent->assigned_cs_agent_id, $newStudent->id);
+                return response()->json(['ok' => true, 'action' => 'reapplication_keep_previous'], 200);
+            }
+
+            // Defensive: reapplication but no action specified
+            $this->appendSystemNote($existing, "Reapplication submitted but no action specified (keep/cancel). Please review.");
+            $this->notifyAgent($existing->assigned_cs_agent_id, $existing->id, 'additional_form_submission');
+            return response()->json(['ok' => true, 'action' => 'reapplication_no_action'], 200);
+        }
+
+        // 13b. Add-on products → note + notify, no new student
+        $addOnTypes = ['insurance', 'emergencial_tax', 'learn_protection', 'other'];
+        if (in_array($productType, $addOnTypes, true)) {
+            $this->appendSystemNote(
+                $existing,
+                "New {$productLabel} request from this student. Price: {$priceStr}.{$pendingStr}"
+            );
+            $this->notifyAgent($existing->assigned_cs_agent_id, $existing->id, 'additional_form_submission');
+            return response()->json(['ok' => true, 'action' => 'addon_note'], 200);
+        }
+
+        // 13c. Primary types duplicate (higher_education, first_visa) → note + notify, no new student
+        $this->appendSystemNote(
+            $existing,
+            "Duplicate submission detected for {$productLabel}. Form submitted " . now()->format('d/m/Y H:i') . ". Review and reach out."
+        );
+        $this->notifyAgent($existing->assigned_cs_agent_id, $existing->id, 'additional_form_submission');
+        return response()->json(['ok' => true, 'action' => 'duplicate_note'], 200);
+    }
+
+    private function appendSystemNote(Student $student, string $body): void
+    {
+        Note::create([
+            'student_id' => $student->id,
+            'author_id'  => null,
+            'body'       => $body,
+        ]);
+    }
+
+    private function notifyAgent(?int $agentId, int $studentId, string $type = 'new_assignment'): void
+    {
+        if (!$agentId) return;
+        Notification::create([
+            'user_id'    => $agentId,
+            'type'       => $type,
+            'student_id' => $studentId,
+        ]);
     }
 }

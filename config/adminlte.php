@@ -319,6 +319,11 @@ return [
             'route' => 'admin.students.index',
             'icon'  => 'fas fa-fw fa-user-graduate',
         ],
+        [
+            'text'  => 'Duplicates',
+            'route' => 'admin.duplicates.index',
+            'icon'  => 'fas fa-fw fa-compress-alt',
+        ],
 
         ['header' => 'TEAM'],
         [

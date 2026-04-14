@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Notification;
 use App\Models\Student;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -46,10 +47,26 @@ class TodayTasksController extends Controller
             ->get()
             ->map(fn($s) => ['id' => $s->id, 'name' => $s->name]);
 
+        // Alerts — unread additional form submission notifications for this agent
+        $alerts = Notification::with('student')
+            ->where('user_id', $agent->id)
+            ->where('type', 'additional_form_submission')
+            ->whereNull('read_at')
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(fn($n) => [
+                'id'           => $n->id,
+                'student_id'   => $n->student_id,
+                'student_name' => $n->student?->name,
+            ])
+            ->filter(fn($a) => $a['student_name'] !== null)
+            ->values();
+
         return response()->json([
             'followups' => $followups,
             'birthdays' => $birthdays,
             'exams'     => $exams,
+            'alerts'    => $alerts,
         ]);
     }
 }

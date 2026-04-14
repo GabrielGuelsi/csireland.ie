@@ -91,6 +91,8 @@ class StudentController extends Controller
             'next_followup_note'    => 'nullable|string|max:500',
             'sales_consultant_id'   => 'nullable|exists:sales_consultants,id',
             'assigned_cs_agent_id'  => 'nullable|exists:users,id',
+            'cancellation_reason'    => 'required_if:status,cancelled|nullable|string|max:1000',
+            'cancellation_justified' => 'required_if:status,cancelled|nullable|boolean',
         ]);
 
         $student = Student::create(array_merge(
@@ -102,6 +104,7 @@ class StudentController extends Controller
                 'pending_documents', 'observations',
                 'next_followup_date', 'next_followup_note',
                 'sales_consultant_id', 'assigned_cs_agent_id',
+                'cancellation_reason', 'cancellation_justified',
             ]),
             [
                 'source'            => 'manual',
@@ -140,6 +143,8 @@ class StudentController extends Controller
             'observations'          => 'nullable|string|max:5000',
             'next_followup_date'    => 'nullable|date',
             'next_followup_note'    => 'nullable|string|max:500',
+            'cancellation_reason'    => 'required_if:status,cancelled|nullable|string|max:1000',
+            'cancellation_justified' => 'required_if:status,cancelled|nullable|boolean',
         ]);
 
         $student->update($request->only([
@@ -149,6 +154,7 @@ class StudentController extends Controller
             'visa_type', 'visa_expiry_date', 'exam_date', 'exam_result',
             'pending_documents', 'observations',
             'next_followup_date', 'next_followup_note',
+            'cancellation_reason', 'cancellation_justified',
         ]));
 
         return redirect()->route('admin.students.show', $student)->with('success', 'Student updated.');

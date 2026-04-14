@@ -21,6 +21,7 @@ class Student extends Model
         'form_submitted_at', 'first_contacted_at', 'last_contacted_at', 'gift_received_at',
         'next_followup_date', 'next_followup_note',
         'source',
+        'cancellation_reason', 'cancellation_justified',
     ];
 
     protected $casts = [

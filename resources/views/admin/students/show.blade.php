@@ -66,6 +66,7 @@ $priorityBadge = ['high' => 'danger', 'medium' => 'warning', 'low' => 'secondary
                     <dt class="col-sm-4">Assigned Agent</dt><dd class="col-sm-8">{{ $student->assignedAgent?->name ?? '⚠ Unassigned' }}</dd>
                     <dt class="col-sm-4">Submitted</dt><dd class="col-sm-8">{{ $student->form_submitted_at?->format('d M Y H:i') }}</dd>
                     <dt class="col-sm-4">First Contact</dt><dd class="col-sm-8">{{ $student->first_contacted_at?->format('d M Y H:i') ?? '—' }}</dd>
+                    <dt class="col-sm-4">Last Contact</dt><dd class="col-sm-8">{{ $student->last_contacted_at?->format('d M Y H:i') ?? '—' }}</dd>
                     @if($student->exam_date)
                     <dt class="col-sm-4">Exam Date</dt>
                     <dd class="col-sm-8">

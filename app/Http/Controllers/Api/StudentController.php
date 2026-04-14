@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\CreateStudentScheduledMessagesJob;
+use App\Models\ActivityLog;
 use App\Models\Student;
 use App\Models\StudentStageLog;
 use App\Services\PhoneNormaliser;
@@ -121,7 +122,15 @@ class StudentController extends Controller
         }
 
         $validStatuses = implode(',', Student::allStatuses());
-        $request->validate(['status' => "required|in:{$validStatuses}"]);
+        $rules = ['status' => "required|in:{$validStatuses}"];
+
+        // Require cancellation reason + justified flag when cancelling
+        if ($request->status === 'cancelled') {
+            $rules['cancellation_reason']    = 'required|string|max:1000';
+            $rules['cancellation_justified'] = 'required|boolean';
+        }
+
+        $request->validate($rules);
 
         $from = $student->status;
         $to   = $request->status;
@@ -141,7 +150,24 @@ class StudentController extends Controller
             $update['first_contacted_at'] = now();
         }
 
+        // Cancellation metadata
+        if ($to === 'cancelled') {
+            $update['cancellation_reason']    = $request->cancellation_reason;
+            $update['cancellation_justified'] = (bool) $request->cancellation_justified;
+        }
+
         $student->update($update);
+
+        // Activity log for cancellation (in addition to the existing StudentStageLog row)
+        if ($to === 'cancelled' && $from !== 'cancelled') {
+            ActivityLog::create([
+                'user_id'    => $request->user()->id,
+                'student_id' => $student->id,
+                'action'     => 'cancelled',
+                'old_value'  => $from,
+                'new_value'  => $request->cancellation_justified ? 'justified' : 'avoidable',
+            ]);
+        }
 
         // Dispatch scheduled messages creation if first contact was just set
         if (isset($update['first_contacted_at'])) {
@@ -211,7 +237,32 @@ class StudentController extends Controller
             'next_followup_note' => 'nullable|string|max:500',
         ]);
 
+        $oldDate = $student->next_followup_date?->format('Y-m-d');
+        $oldNote = $student->next_followup_note;
+
         $student->update($request->only('next_followup_date', 'next_followup_note'));
+
+        // Activity log — date change
+        if ($request->has('next_followup_date') && $oldDate !== $request->next_followup_date) {
+            ActivityLog::create([
+                'user_id'    => $request->user()->id,
+                'student_id' => $student->id,
+                'action'     => $request->next_followup_date ? 'followup_set' : 'followup_cleared',
+                'old_value'  => $oldDate,
+                'new_value'  => $request->next_followup_date,
+            ]);
+        }
+
+        // Activity log — note change
+        if ($request->has('next_followup_note') && $oldNote !== $request->next_followup_note) {
+            ActivityLog::create([
+                'user_id'    => $request->user()->id,
+                'student_id' => $student->id,
+                'action'     => 'followup_note_changed',
+                'old_value'  => $oldNote,
+                'new_value'  => $request->next_followup_note,
+            ]);
+        }
 
         return response()->json(['ok' => true]);
     }
@@ -224,7 +275,21 @@ class StudentController extends Controller
         }
 
         $request->validate(['priority' => 'nullable|in:high,medium,low']);
-        $student->update(['priority' => $request->priority ?: null]);
+
+        $oldPriority = $student->priority;
+        $newPriority = $request->priority ?: null;
+
+        $student->update(['priority' => $newPriority]);
+
+        if ($oldPriority !== $newPriority) {
+            ActivityLog::create([
+                'user_id'    => $request->user()->id,
+                'student_id' => $student->id,
+                'action'     => 'priority_changed',
+                'old_value'  => $oldPriority,
+                'new_value'  => $newPriority,
+            ]);
+        }
 
         return response()->json(['ok' => true, 'priority' => $student->priority]);
     }
@@ -237,6 +302,12 @@ class StudentController extends Controller
         }
 
         $student->update(['gift_received_at' => now()]);
+
+        ActivityLog::create([
+            'user_id'    => $request->user()->id,
+            'student_id' => $student->id,
+            'action'     => 'marked_gift_received',
+        ]);
 
         return response()->json(['ok' => true, 'gift_received_at' => $student->gift_received_at->toIso8601String()]);
     }
@@ -253,6 +324,13 @@ class StudentController extends Controller
             $updates['first_contacted_at'] = now();
         }
         $student->update($updates);
+
+        ActivityLog::create([
+            'user_id'    => $request->user()->id,
+            'student_id' => $student->id,
+            'action'     => 'marked_contacted',
+            'new_value'  => now()->toIso8601String(),
+        ]);
 
         return response()->json([
             'ok'                 => true,

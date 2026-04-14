@@ -77,13 +77,41 @@ $statusOptions = [
 
     <div class="form-group">
         <label>Status *</label>
-        <select name="status" class="form-control @error('status') is-invalid @enderror" required>
+        <select name="status" id="status-select" class="form-control @error('status') is-invalid @enderror" required>
             @foreach($statusOptions as $val => $label)
             <option value="{{ $val }}" {{ old('status', $s?->status) === $val ? 'selected' : '' }}>{{ $label }}</option>
             @endforeach
         </select>
         @error('status')<div class="invalid-feedback">{{ $message }}</div>@enderror
     </div>
+
+    <div id="cancellation-fields" style="{{ old('status', $s?->status) === 'cancelled' ? '' : 'display:none' }}">
+        <div class="form-group">
+            <label>Cancellation Reason *</label>
+            <textarea name="cancellation_reason" class="form-control @error('cancellation_reason') is-invalid @enderror" rows="2">{{ old('cancellation_reason', $s?->cancellation_reason) }}</textarea>
+            @error('cancellation_reason')<div class="invalid-feedback">{{ $message }}</div>@enderror
+        </div>
+        <div class="form-group">
+            <label>Was this cancellation justified? *</label>
+            <div>
+                <label class="mr-3"><input type="radio" name="cancellation_justified" value="1" {{ old('cancellation_justified', $s?->cancellation_justified) == 1 ? 'checked' : '' }}> Yes — justified (no KPI penalty)</label>
+                <label><input type="radio" name="cancellation_justified" value="0" {{ old('cancellation_justified', $s?->cancellation_justified) === 0 || old('cancellation_justified', $s?->cancellation_justified) === '0' ? 'checked' : '' }}> No — avoidable (−€5 KPI penalty)</label>
+            </div>
+            @error('cancellation_justified')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const sel = document.getElementById('status-select');
+        const fields = document.getElementById('cancellation-fields');
+        if (sel && fields) {
+            sel.addEventListener('change', function () {
+                fields.style.display = this.value === 'cancelled' ? '' : 'none';
+            });
+        }
+    });
+    </script>
 
     <div class="form-group">
         <label>Priority</label>

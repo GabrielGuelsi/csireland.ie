@@ -175,11 +175,33 @@ class WebhookController extends Controller
             $existing = Student::whereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower(trim($studentName))])->first();
         }
 
-        // 12. No match → create as today (normal flow)
+        // 12. No match → create as today (normal flow), with special handling for add-ons
         if (!$existing) {
+            $addOnTypes = ['insurance', 'emergencial_tax', 'learn_protection'];
+            $isAddOn = in_array($productType, $addOnTypes, true);
+
+            // Add-on forms with no matching student: mark as already contacted
+            // so they don't trigger first_contact_overdue SLA alerts
+            if ($isAddOn) {
+                $newStudentData['first_contacted_at'] = now();
+            }
+
             $student = Student::create($newStudentData);
-            $this->notifyAgent($assignment['assigned_cs_agent_id'], $student->id);
-            return response()->json(['ok' => true, 'action' => 'created'], 200);
+
+            if ($isAddOn) {
+                $productLabel = $productRaw ?? ucfirst(str_replace('_', ' ', $productType));
+                $this->appendSystemNote(
+                    $student,
+                    "Add-on product request ({$productLabel}) — no previous student found. Review manually and decide if a full CS journey applies."
+                );
+            }
+
+            $this->notifyAgent(
+                $assignment['assigned_cs_agent_id'],
+                $student->id,
+                $isAddOn ? 'additional_form_submission' : 'new_assignment'
+            );
+            return response()->json(['ok' => true, 'action' => $isAddOn ? 'created_addon' : 'created'], 200);
         }
 
         // 13. Match found → route based on product type

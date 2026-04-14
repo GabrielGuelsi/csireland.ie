@@ -34,20 +34,65 @@ class DuplicateController extends Controller
                 }
                 $dup = Student::findOrFail($dupId);
 
-                // Move all child table rows from the duplicate to the kept record
+                // ── Smart field merge ──
+                $changes = [];
+
+                // Rule A: empty-fill (always runs) — fill holes on keep from dup
+                $emptyFillFields = ['whatsapp_phone', 'email', 'date_of_birth', 'visa_expiry_date', 'product_type_other'];
+                foreach ($emptyFillFields as $field) {
+                    if (blank($keep->$field) && filled($dup->$field)) {
+                        $changes[$field] = [null, $dup->$field, 'filled from duplicate'];
+                        $keep->$field = $dup->$field;
+                    }
+                }
+
+                // Rule B: recency-override (only if dup is more recent) — carry over form-driven fields
+                $dupIsNewer = $dup->form_submitted_at
+                    && $keep->form_submitted_at
+                    && $dup->form_submitted_at->gt($keep->form_submitted_at);
+
+                if ($dupIsNewer) {
+                    $recencyFields = ['course', 'university', 'intake', 'product_type', 'sales_price', 'sales_price_scholarship', 'pending_documents'];
+                    foreach ($recencyFields as $field) {
+                        if (filled($dup->$field) && $keep->$field !== $dup->$field) {
+                            $changes[$field] = [$keep->$field, $dup->$field, 'from more recent form'];
+                            $keep->$field = $dup->$field;
+                        }
+                    }
+                }
+
+                if (!empty($changes)) {
+                    $keep->save();
+                }
+
+                // ── Move all child table rows from the duplicate to the kept record ──
                 DB::table('notes')->where('student_id', $dup->id)->update(['student_id' => $keep->id]);
                 DB::table('student_stage_logs')->where('student_id', $dup->id)->update(['student_id' => $keep->id]);
                 DB::table('message_logs')->where('student_id', $dup->id)->update(['student_id' => $keep->id]);
                 DB::table('notifications')->where('student_id', $dup->id)->update(['student_id' => $keep->id]);
                 DB::table('scheduled_student_messages')->where('student_id', $dup->id)->update(['student_id' => $keep->id]);
 
-                // Audit note on the kept record
+                // ── Audit note listing what changed ──
+                $noteLines = [
+                    "Merged duplicate record #{$dup->id} ({$dup->name}). Original form submitted "
+                        . ($dup->form_submitted_at?->format('d/m/Y') ?? 'unknown')
+                        . ". Notes, stage logs and messages from the duplicate are now part of this record.",
+                ];
+
+                if (!empty($changes)) {
+                    $noteLines[] = '';
+                    $noteLines[] = 'Fields updated from duplicate:';
+                    foreach ($changes as $field => [$old, $new, $reason]) {
+                        $oldStr = $old === null || $old === '' ? '(empty)' : "\"{$old}\"";
+                        $newStr = "\"{$new}\"";
+                        $noteLines[] = "• {$field}: {$oldStr} → {$newStr} ({$reason})";
+                    }
+                }
+
                 Note::create([
                     'student_id' => $keep->id,
                     'author_id'  => null,
-                    'body'       => "Merged duplicate record #{$dup->id} ({$dup->name}). Original form submitted "
-                        . ($dup->form_submitted_at?->format('d/m/Y') ?? 'unknown')
-                        . ". Notes, stage logs and messages from the duplicate are now part of this record.",
+                    'body'       => implode("\n", $noteLines),
                 ]);
 
                 // Soft delete the duplicate

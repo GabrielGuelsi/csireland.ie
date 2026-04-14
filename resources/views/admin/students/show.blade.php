@@ -87,7 +87,7 @@ $priorityBadge = ['high' => 'danger', 'medium' => 'warning', 'low' => 'secondary
                     <dt class="col-sm-4">Visa Expiry</dt>
                     <dd class="col-sm-8">
                         {{ $student->visa_expiry_date->format('d M Y') }}
-                        @php $daysLeft = now()->diffInDays($student->visa_expiry_date, false); @endphp
+                        @php $daysLeft = (int) now()->diffInDays($student->visa_expiry_date, false); @endphp
                         @if($daysLeft <= 0)
                         <span class="badge badge-danger">Expired!</span>
                         @elseif($daysLeft <= 30)
@@ -100,7 +100,7 @@ $priorityBadge = ['high' => 'danger', 'medium' => 'warning', 'low' => 'secondary
                     <dt class="col-sm-4">Visa Expiry</dt>
                     <dd class="col-sm-8">
                         {{ $student->visa_expiry_date->format('d M Y') }}
-                        @php $daysLeft = now()->diffInDays($student->visa_expiry_date, false); @endphp
+                        @php $daysLeft = (int) now()->diffInDays($student->visa_expiry_date, false); @endphp
                         @if($daysLeft <= 0)
                         <span class="badge badge-danger">Expired!</span>
                         @elseif($daysLeft <= 30)
@@ -111,7 +111,7 @@ $priorityBadge = ['high' => 'danger', 'medium' => 'warning', 'low' => 'secondary
                     </dd>
                     @endif
                     @if($student->next_followup_date)
-                    @php $followupDays = now()->diffInDays($student->next_followup_date, false); @endphp
+                    @php $followupDays = (int) now()->diffInDays($student->next_followup_date, false); @endphp
                     <dt class="col-sm-4">Next Follow-up</dt>
                     <dd class="col-sm-8">
                         @if($followupDays < 0)

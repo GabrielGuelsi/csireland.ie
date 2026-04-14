@@ -177,7 +177,7 @@ class ReportController extends Controller
                 $days = $concludedStudents->map(function ($s) {
                     $concludedAt = $s->stageLogs->first()?->changed_at;
                     return $concludedAt && $s->form_submitted_at
-                        ? $s->form_submitted_at->diffInDays($concludedAt)
+                        ? (float) $s->form_submitted_at->diffInDays($concludedAt)
                         : null;
                 })->filter();
                 $avgDaysToConclusion = $days->isEmpty() ? null : $days->avg();
@@ -300,7 +300,7 @@ class ReportController extends Controller
                 $stageEnteredAt = $this->stageEnteredAt($s);
                 return [
                     'student'        => $s,
-                    'days_in_status' => $stageEnteredAt ? $stageEnteredAt->diffInDays(now()) : 0,
+                    'days_in_status' => $stageEnteredAt ? (int) $stageEnteredAt->diffInDays(now()) : 0,
                     'days_overdue'   => $status['days_remaining'] !== null ? abs(min(0, $status['days_remaining'])) : 0,
                 ];
             })
@@ -318,7 +318,7 @@ class ReportController extends Controller
             ->get()
             ->map(fn($s) => [
                 'student'      => $s,
-                'days_overdue' => $s->next_followup_date->diffInDays(today()),
+                'days_overdue' => (int) $s->next_followup_date->diffInDays(today()),
             ]);
     }
 

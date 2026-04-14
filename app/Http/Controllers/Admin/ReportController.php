@@ -57,17 +57,20 @@ class ReportController extends Controller
         }
 
         // Agent performance: avg hours from form_submitted_at → first_contacted_at
+        // Exclude add-on product types (they don't follow the CS journey and get auto-contacted at creation)
+        $addOnTypes = ['insurance', 'emergencial_tax', 'learn_protection'];
         $agentPerf = User::where('role', 'cs_agent')
             ->where('active', true)
-            ->withCount(['assignedStudents as total_assigned' => fn($q) => $q->whereBetween('form_submitted_at', [$from, $to])])
+            ->withCount(['assignedStudents as total_assigned' => fn($q) => $q->whereBetween('form_submitted_at', [$from, $to])->whereNotIn('product_type', $addOnTypes)])
             ->get()
-            ->map(function ($agent) use ($from, $to) {
+            ->map(function ($agent) use ($from, $to, $addOnTypes) {
                 $avgResponse = null;
 
                 if (DB::getDriverName() === 'mysql') {
                     $avgResponse = Student::where('assigned_cs_agent_id', $agent->id)
                         ->whereNotNull('first_contacted_at')
                         ->whereBetween('form_submitted_at', [$from, $to])
+                        ->whereNotIn('product_type', $addOnTypes)
                         ->select(DB::raw('AVG(TIMESTAMPDIFF(HOUR, form_submitted_at, first_contacted_at)) as avg_hours'))
                         ->value('avg_hours');
                 } else {
@@ -75,6 +78,7 @@ class ReportController extends Controller
                     $students = Student::where('assigned_cs_agent_id', $agent->id)
                         ->whereNotNull('first_contacted_at')
                         ->whereBetween('form_submitted_at', [$from, $to])
+                        ->whereNotIn('product_type', $addOnTypes)
                         ->get(['form_submitted_at', 'first_contacted_at']);
 
                     if ($students->isNotEmpty()) {

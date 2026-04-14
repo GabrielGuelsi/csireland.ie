@@ -53,8 +53,11 @@ class DashboardController extends Controller
             ->get();
 
         // First contact overdue (no first_contacted_at after 3+ working days)
+        // Exclude add-on product types — they don't follow the CS journey
+        $addOnTypes = ['insurance', 'emergencial_tax', 'learn_protection'];
         $overdueFirstContact = Student::whereNull('first_contacted_at')
             ->whereNotIn('status', ['cancelled'])
+            ->whereNotIn('product_type', $addOnTypes)
             ->where('source', 'form')
             ->with('assignedAgent')
             ->get()

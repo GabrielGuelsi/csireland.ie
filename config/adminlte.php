@@ -327,7 +327,7 @@ return [
 
         ['header' => 'APPLICATIONS'],
         [
-            'text'  => 'Dispatch Inbox',
+            'text'  => 'New Entries',
             'route' => 'admin.applications.dispatch.index',
             'icon'  => 'fas fa-fw fa-inbox',
         ],

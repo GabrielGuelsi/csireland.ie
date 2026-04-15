@@ -136,6 +136,7 @@ class Student extends Model
         return [
             'new_dispatch',
             'in_review',
+            'waiting_cs',
             'applied',
             'waiting_college',
             'offer_received',
@@ -148,6 +149,7 @@ class Student extends Model
         return match($status) {
             'new_dispatch'    => 'New Dispatch',
             'in_review'       => 'In Review',
+            'waiting_cs'      => 'Waiting CS',
             'applied'         => 'Applied to College',
             'waiting_college' => 'Waiting College Response',
             'offer_received'  => 'Offer Received',

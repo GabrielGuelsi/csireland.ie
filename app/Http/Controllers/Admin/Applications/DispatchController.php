@@ -9,14 +9,18 @@ use Illuminate\Http\Request;
 
 class DispatchController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $students = Student::whereNull('application_status')
-            ->orWhere('application_status', 'new_dispatch')
-            ->orderByDesc('form_submitted_at')
-            ->paginate(30);
+        $q = trim((string) $request->query('q', ''));
 
-        return view('admin.applications.dispatch_inbox', compact('students'));
+        $students = Student::when($q !== '', function ($query) use ($q) {
+                $query->where('name', 'LIKE', '%' . $q . '%');
+            })
+            ->orderByDesc('form_submitted_at')
+            ->paginate(30)
+            ->withQueryString();
+
+        return view('admin.applications.dispatch_inbox', compact('students', 'q'));
     }
 
     public function accept(Request $request, Student $student)

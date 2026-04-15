@@ -339,9 +339,9 @@ return [
 
         ['header' => 'TEAM'],
         [
-            'text'  => 'CS Agents',
+            'text'  => 'Team Members',
             'route' => 'admin.agents.index',
-            'icon'  => 'fas fa-fw fa-headset',
+            'icon'  => 'fas fa-fw fa-users',
         ],
         [
             'text'  => 'Sales Consultants',

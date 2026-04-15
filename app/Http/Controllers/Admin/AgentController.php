@@ -64,6 +64,7 @@ class AgentController extends Controller
             'password'       => ['nullable', Password::min(8)],
             'whatsapp_phone' => 'nullable|string|max:30',
             'active'         => 'boolean',
+            'role'           => 'nullable|in:cs_agent,application',
         ]);
 
         $data = [
@@ -71,6 +72,7 @@ class AgentController extends Controller
             'email'          => $request->email,
             'whatsapp_phone' => $request->whatsapp_phone,
             'active'         => $request->boolean('active'),
+            'role'           => $request->role ?: $agent->role,
         ];
 
         if ($request->filled('password')) {
@@ -79,7 +81,7 @@ class AgentController extends Controller
 
         $agent->update($data);
 
-        return redirect()->route('admin.agents.index')->with('success', 'Agent updated.');
+        return redirect()->route('admin.agents.index')->with('success', 'User updated.');
     }
 
     public function destroy(User $agent)

@@ -1,9 +1,9 @@
 @extends('adminlte::page')
 
-@section('title', 'Edit Agent — ' . $agent->name)
+@section('title', 'Edit Team Member — ' . $agent->name)
 
 @section('content_header')
-    <h1>Edit Agent — {{ $agent->name }}</h1>
+    <h1>Edit Team Member — {{ $agent->name }}</h1>
 @stop
 
 @section('content')
@@ -32,6 +32,14 @@
             <div class="form-group">
                 <label>Email <span class="text-danger">*</span></label>
                 <input type="email" name="email" class="form-control" value="{{ old('email', $agent->email) }}" required>
+            </div>
+
+            <div class="form-group">
+                <label>Role <span class="text-danger">*</span></label>
+                <select name="role" class="form-control" required>
+                    <option value="cs_agent" @selected(old('role', $agent->role) === 'cs_agent')>CS Agent</option>
+                    <option value="application" @selected(old('role', $agent->role) === 'application')>Applications Team</option>
+                </select>
             </div>
 
             <div class="form-group">

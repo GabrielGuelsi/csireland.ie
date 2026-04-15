@@ -1,9 +1,9 @@
 @extends('adminlte::page')
 
-@section('title', 'CS Agents')
+@section('title', 'Team Members')
 
 @section('content_header')
-    <h1>CS Agents</h1>
+    <h1>Team Members</h1>
 @stop
 
 @section('content')
@@ -12,7 +12,7 @@
 <div class="alert alert-success">{{ session('success') }}</div>
 @endif
 
-<a href="{{ route('admin.agents.create') }}" class="btn btn-primary mb-3">+ New Agent</a>
+<a href="{{ route('admin.agents.create') }}" class="btn btn-primary mb-3">+ New User</a>
 
 <div class="card">
     <div class="card-body table-responsive p-0">

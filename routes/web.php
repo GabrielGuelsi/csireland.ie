@@ -15,17 +15,24 @@ use App\Http\Controllers\Admin\SalesConsultantController;
 use App\Http\Controllers\Admin\SlaSettingController;
 use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Admin\TemplateController;
+use App\Http\Controllers\My\DashboardController as MyDashboardController;
+use App\Http\Controllers\My\NotificationController as MyNotificationController;
+use App\Http\Controllers\My\StudentController as MyStudentController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function (Request $request) {
-    // Applications subdomain → land on dispatch inbox; otherwise dashboard
-    if ($request->getHost() === 'app.ciireland.ie' && Auth::check()) {
+    // Applications subdomain → land on dispatch inbox for logged-in non-CS users
+    if ($request->getHost() === 'app.ciireland.ie' && Auth::check() && !Auth::user()->isCsAgent()) {
         return redirect()->route('admin.applications.dispatch.index');
     }
-    return redirect()->route('admin.dashboard');
+    // Role-based landing
+    if (Auth::check()) {
+        return redirect(Auth::user()->defaultRoute());
+    }
+    return redirect()->route('login');
 });
 Route::get('/privacy', fn() => view('privacy'))->name('privacy');
 
@@ -98,6 +105,28 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile',    [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile',  [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// CS agent portal — own students only (admins allowed for preview)
+Route::middleware(['auth', 'cs_agent'])->prefix('my')->name('my.')->group(function () {
+    Route::get('dashboard', [MyDashboardController::class, 'index'])->name('dashboard');
+
+    // Own students
+    Route::get('students',                      [MyStudentController::class, 'index'])->name('students.index');
+    Route::get('students/{student}',            [MyStudentController::class, 'show'])->name('students.show');
+    Route::patch('students/{student}/stage',    [MyStudentController::class, 'updateStage'])->name('students.stage');
+    Route::patch('students/{student}/priority', [MyStudentController::class, 'updatePriority'])->name('students.priority');
+    Route::patch('students/{student}/exam',     [MyStudentController::class, 'updateExam'])->name('students.exam');
+    Route::patch('students/{student}/payment',  [MyStudentController::class, 'updatePayment'])->name('students.payment');
+    Route::patch('students/{student}/visa',     [MyStudentController::class, 'updateVisa'])->name('students.visa');
+    Route::patch('students/{student}/gift-received', [MyStudentController::class, 'markGiftReceived'])->name('students.giftReceived');
+    Route::patch('students/{student}/followup', [MyStudentController::class, 'updateFollowup'])->name('students.followup');
+    Route::post('students/{student}/notes',     [MyStudentController::class, 'addNote'])->name('students.notes.store');
+    Route::patch('scheduled-messages/{scheduledMessage}/sent', [MyStudentController::class, 'markScheduledSent'])->name('scheduledMessages.sent');
+
+    // Notifications
+    Route::get('notifications',                [MyNotificationController::class, 'index'])->name('notifications.index');
+    Route::patch('notifications/{notification}/read', [MyNotificationController::class, 'markRead'])->name('notifications.read');
 });
 
 require __DIR__.'/auth.php';

@@ -305,72 +305,104 @@ return [
             'topnav_right' => true,
         ],
 
-        // Sidebar
-        ['header' => 'MAIN'],
+        // ---------- CS AGENT PORTAL (/my) ----------
+        ['header' => 'MY WORK', 'can' => 'access-my'],
+        [
+            'text'  => 'My Dashboard',
+            'route' => 'my.dashboard',
+            'icon'  => 'fas fa-fw fa-tachometer-alt',
+            'can'   => 'access-my',
+        ],
+        [
+            'text'  => 'My Students',
+            'route' => 'my.students.index',
+            'icon'  => 'fas fa-fw fa-user-graduate',
+            'can'   => 'access-my',
+        ],
+        [
+            'text'  => 'My Notifications',
+            'route' => 'my.notifications.index',
+            'icon'  => 'fas fa-fw fa-bell',
+            'can'   => 'access-my',
+        ],
+
+        // ---------- ADMIN / APPLICATIONS ----------
+        ['header' => 'MAIN', 'can' => 'access-admin'],
         [
             'text'  => 'Dashboard',
             'route' => 'admin.dashboard',
             'icon'  => 'fas fa-fw fa-tachometer-alt',
+            'can'   => 'access-admin',
         ],
 
-        ['header' => 'STUDENTS'],
+        ['header' => 'STUDENTS', 'can' => 'access-admin'],
         [
             'text'  => 'Students',
             'route' => 'admin.students.index',
             'icon'  => 'fas fa-fw fa-user-graduate',
+            'can'   => 'access-admin',
         ],
         [
             'text'  => 'Duplicates',
             'route' => 'admin.duplicates.index',
             'icon'  => 'fas fa-fw fa-compress-alt',
+            'can'   => 'access-admin',
         ],
 
-        ['header' => 'APPLICATIONS'],
+        ['header' => 'APPLICATIONS', 'can' => 'access-admin'],
         [
             'text'  => 'New Entries',
             'route' => 'admin.applications.dispatch.index',
             'icon'  => 'fas fa-fw fa-inbox',
+            'can'   => 'access-admin',
         ],
         [
             'text'  => 'Application Pipeline',
             'route' => 'admin.applications.pipeline.index',
             'icon'  => 'fas fa-fw fa-stream',
+            'can'   => 'access-admin',
         ],
 
-        ['header' => 'TEAM'],
+        ['header' => 'TEAM', 'can' => 'access-admin'],
         [
             'text'  => 'Team Members',
             'route' => 'admin.agents.index',
             'icon'  => 'fas fa-fw fa-users',
+            'can'   => 'access-admin',
         ],
         [
             'text'  => 'Sales Consultants',
             'route' => 'admin.sales-consultants.index',
             'icon'  => 'fas fa-fw fa-briefcase',
+            'can'   => 'access-admin',
         ],
 
-        ['header' => 'CONFIGURATION'],
+        ['header' => 'CONFIGURATION', 'can' => 'access-admin'],
         [
             'text'  => 'Assignment Rules',
             'route' => 'admin.assignment-rules.index',
             'icon'  => 'fas fa-fw fa-random',
+            'can'   => 'access-admin',
         ],
         [
             'text'  => 'SLA Settings',
             'route' => 'admin.sla-settings.index',
             'icon'  => 'fas fa-fw fa-clock',
+            'can'   => 'access-admin',
         ],
         [
             'text'  => 'Templates',
             'route' => 'admin.templates.index',
             'icon'  => 'fas fa-fw fa-envelope-open-text',
+            'can'   => 'access-admin',
         ],
 
-        ['header' => 'ANALYTICS'],
+        ['header' => 'ANALYTICS', 'can' => 'access-admin'],
         [
             'text'  => 'Reports',
             'route' => 'admin.reports.index',
             'icon'  => 'fas fa-fw fa-chart-bar',
+            'can'   => 'access-admin',
         ],
 
         ['header' => 'ACCOUNT'],

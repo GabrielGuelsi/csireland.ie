@@ -51,4 +51,21 @@ class User extends Authenticatable
     {
         return $this->isAdmin() || $this->isApplicationAgent();
     }
+
+    public function isCsAgent(): bool
+    {
+        return $this->role === 'cs_agent';
+    }
+
+    /**
+     * The route this user should land on after login or when visiting /.
+     * Admin / Applications → admin dashboard. CS agents → /my dashboard.
+     */
+    public function defaultRoute(): string
+    {
+        if ($this->isCsAgent()) {
+            return route('my.dashboard', absolute: false);
+        }
+        return route('admin.dashboard', absolute: false);
+    }
 }

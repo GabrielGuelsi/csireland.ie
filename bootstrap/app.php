@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureAdmin::class,
             'admin_or_application' => \App\Http\Middleware\EnsureAdminOrApplication::class,
+            'cs_agent' => \App\Http\Middleware\EnsureCsAgent::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

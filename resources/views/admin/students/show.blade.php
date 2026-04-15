@@ -205,6 +205,9 @@ $priorityBadge = ['high' => 'danger', 'medium' => 'warning', 'low' => 'secondary
             </div>
         </div>
 
+        {{-- CS ↔ Applications chat --}}
+        @include('admin.applications._chat_thread', ['student' => $student])
+
     </div>
     <div class="col-md-4">
 

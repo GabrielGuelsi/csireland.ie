@@ -41,4 +41,14 @@ class User extends Authenticatable
     {
         return $this->role === 'admin';
     }
+
+    public function isApplicationAgent(): bool
+    {
+        return $this->role === 'application';
+    }
+
+    public function isAdminOrApplication(): bool
+    {
+        return $this->isAdmin() || $this->isApplicationAgent();
+    }
 }

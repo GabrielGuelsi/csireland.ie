@@ -41,7 +41,15 @@
                 <input type="text" name="whatsapp_phone" class="form-control" value="{{ old('whatsapp_phone') }}" placeholder="+353 87 123 4567">
             </div>
 
-            <button type="submit" class="btn btn-primary">Create Agent</button>
+            <div class="form-group">
+                <label>Role <span class="text-danger">*</span></label>
+                <select name="role" class="form-control" required>
+                    <option value="cs_agent" @selected(old('role', 'cs_agent') === 'cs_agent')>CS Agent</option>
+                    <option value="application" @selected(old('role') === 'application')>Applications Team</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Create User</button>
             <a href="{{ route('admin.agents.index') }}" class="btn btn-secondary ml-2">Cancel</a>
         </form>
 

@@ -1,0 +1,37 @@
+<?php
+
+namespace App\Http\Controllers\Admin\Applications;
+
+use App\Http\Controllers\Controller;
+use App\Models\Student;
+use App\Models\StudentChat;
+use Illuminate\Http\Request;
+
+class DispatchController extends Controller
+{
+    public function index()
+    {
+        $students = Student::whereNull('application_status')
+            ->orWhere('application_status', 'new_dispatch')
+            ->orderByDesc('form_submitted_at')
+            ->paginate(30);
+
+        return view('admin.applications.dispatch_inbox', compact('students'));
+    }
+
+    public function accept(Request $request, Student $student)
+    {
+        $student->update(['application_status' => 'in_review']);
+
+        StudentChat::create([
+            'student_id'  => $student->id,
+            'author_id'   => $request->user()->id,
+            'author_role' => $request->user()->role ?? 'application',
+            'body'        => 'Dispatch accepted — moved to In Review.',
+        ]);
+
+        return redirect()
+            ->route('admin.applications.students.show', $student)
+            ->with('status', 'Dispatch accepted.');
+    }
+}

@@ -2,6 +2,10 @@
 
 use App\Http\Controllers\Admin\AgentController;
 use App\Http\Controllers\Admin\AlertRuleController;
+use App\Http\Controllers\Admin\Applications\ApplicationPipelineController;
+use App\Http\Controllers\Admin\Applications\ApplicationStudentController;
+use App\Http\Controllers\Admin\Applications\DispatchController;
+use App\Http\Controllers\Admin\Applications\StudentChatController;
 use App\Http\Controllers\Admin\AssignmentRuleController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DuplicateController;
@@ -12,12 +16,20 @@ use App\Http\Controllers\Admin\SlaSettingController;
 use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Admin\TemplateController;
 use App\Http\Controllers\ProfileController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn() => redirect()->route('admin.dashboard'));
+Route::get('/', function (Request $request) {
+    // Applications subdomain → land on dispatch inbox; otherwise dashboard
+    if ($request->getHost() === 'app.ciireland.ie' && Auth::check()) {
+        return redirect()->route('admin.applications.dispatch.index');
+    }
+    return redirect()->route('admin.dashboard');
+});
 Route::get('/privacy', fn() => view('privacy'))->name('privacy');
 
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'admin_or_application'])->prefix('admin')->name('admin.')->group(function () {
 
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -67,6 +79,19 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     // Reports
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+
+    // Applications team
+    Route::prefix('applications')->name('applications.')->group(function () {
+        Route::get('dispatch',                 [DispatchController::class, 'index'])->name('dispatch.index');
+        Route::post('dispatch/{student}/accept', [DispatchController::class, 'accept'])->name('dispatch.accept');
+        Route::get('pipeline',                 [ApplicationPipelineController::class, 'index'])->name('pipeline.index');
+        Route::get('students/{student}',       [ApplicationStudentController::class, 'show'])->name('students.show');
+        Route::match(['PUT','PATCH'], 'students/{student}', [ApplicationStudentController::class, 'update'])->name('students.update');
+    });
+
+    // Student chat (shared between CS admins and Applications team)
+    Route::get('students/{student}/chat',  [StudentChatController::class, 'index'])->name('students.chat.index');
+    Route::post('students/{student}/chat', [StudentChatController::class, 'store'])->name('students.chat.store');
 });
 
 Route::middleware('auth')->group(function () {

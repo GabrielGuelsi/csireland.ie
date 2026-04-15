@@ -20,6 +20,7 @@
             <thead>
                 <tr>
                     <th>Name</th>
+                    <th>Role</th>
                     <th>Email</th>
                     <th>WhatsApp</th>
                     <th>Students</th>
@@ -31,6 +32,13 @@
                 @foreach($agents as $agent)
                 <tr>
                     <td><strong>{{ $agent->name }}</strong></td>
+                    <td>
+                        @if($agent->role === 'application')
+                            <span class="badge badge-info">Applications</span>
+                        @else
+                            <span class="badge badge-secondary">CS Agent</span>
+                        @endif
+                    </td>
                     <td>{{ $agent->email }}</td>
                     <td>{{ $agent->whatsapp_phone ?? '—' }}</td>
                     <td>
@@ -56,7 +64,7 @@
                 </tr>
                 @endforeach
                 @if($agents->isEmpty())
-                <tr><td colspan="6" class="text-center text-muted">No CS agents yet.</td></tr>
+                <tr><td colspan="7" class="text-center text-muted">No users yet.</td></tr>
                 @endif
             </tbody>
         </table>

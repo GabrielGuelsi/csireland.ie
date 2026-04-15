@@ -12,8 +12,9 @@ class AgentController extends Controller
 {
     public function index()
     {
-        $agents = User::where('role', 'cs_agent')
+        $agents = User::whereIn('role', ['cs_agent', 'application'])
             ->withCount('assignedStudents')
+            ->orderBy('role')
             ->orderBy('name')
             ->get();
 
@@ -32,18 +33,19 @@ class AgentController extends Controller
             'email'           => 'required|email|unique:users,email',
             'password'        => ['required', Password::min(8)],
             'whatsapp_phone'  => 'nullable|string|max:30',
+            'role'            => 'nullable|in:cs_agent,application',
         ]);
 
         User::create([
             'name'           => $request->name,
             'email'          => $request->email,
             'password'       => Hash::make($request->password),
-            'role'           => 'cs_agent',
+            'role'           => $request->role ?: 'cs_agent',
             'whatsapp_phone' => $request->whatsapp_phone,
             'active'         => true,
         ]);
 
-        return redirect()->route('admin.agents.index')->with('success', 'Agent created.');
+        return redirect()->route('admin.agents.index')->with('success', 'User created.');
     }
 
     public function edit(User $agent)

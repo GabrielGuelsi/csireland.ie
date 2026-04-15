@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Note;
 use App\Models\Notification;
 use App\Models\Student;
+use App\Models\User;
 use App\Services\AssignmentService;
 use App\Services\PhoneNormaliser;
 use Illuminate\Http\Request;
@@ -162,6 +163,7 @@ class WebhookController extends Controller
             'sales_consultant_id'     => $assignment['sales_consultant_id'],
             'assigned_cs_agent_id'    => $assignment['assigned_cs_agent_id'],
             'status'                  => 'waiting_initial_documents',
+            'application_status'      => 'new_dispatch',
             'source'                  => 'form',
             'form_submitted_at'       => now(),
         ];
@@ -201,6 +203,7 @@ class WebhookController extends Controller
                 $student->id,
                 $isAddOn ? 'additional_form_submission' : 'new_assignment'
             );
+            $this->notifyApplicationsTeam($student->id);
             return response()->json(['ok' => true, 'action' => $isAddOn ? 'created_addon' : 'created'], 200);
         }
 
@@ -217,6 +220,7 @@ class WebhookController extends Controller
                 $this->appendSystemNote($existing, "Cancelled due to reapplication — see new student #{$newStudent->id}.");
                 $this->appendSystemNote($newStudent, "Reapplication — replaces cancelled student #{$existing->id}.");
                 $this->notifyAgent($newStudent->assigned_cs_agent_id, $newStudent->id);
+                $this->notifyApplicationsTeam($newStudent->id);
                 return response()->json(['ok' => true, 'action' => 'reapplication_cancel_previous'], 200);
             }
 
@@ -225,6 +229,7 @@ class WebhookController extends Controller
                 $this->appendSystemNote($existing, "Reapplication submitted — see new student #{$newStudent->id}.");
                 $this->appendSystemNote($newStudent, "Reapplication — previous student #{$existing->id}.");
                 $this->notifyAgent($newStudent->assigned_cs_agent_id, $newStudent->id);
+                $this->notifyApplicationsTeam($newStudent->id);
                 return response()->json(['ok' => true, 'action' => 'reapplication_keep_previous'], 200);
             }
 
@@ -271,5 +276,20 @@ class WebhookController extends Controller
             'type'       => $type,
             'student_id' => $studentId,
         ]);
+    }
+
+    private function notifyApplicationsTeam(int $studentId): void
+    {
+        $userIds = User::where('role', 'application')
+            ->where('active', true)
+            ->pluck('id');
+
+        foreach ($userIds as $uid) {
+            Notification::create([
+                'user_id'    => $uid,
+                'type'       => 'application_dispatch',
+                'student_id' => $studentId,
+            ]);
+        }
     }
 }

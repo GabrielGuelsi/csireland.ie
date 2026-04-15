@@ -9,7 +9,8 @@
       "Bash(find /c/Users/PC_Desk/Desktop/eduauto-platform -name .htaccess -o -name nginx.conf -o -name *.nginx)",
       "Bash(ls:*)",
       "Bash(grep -n \"password\\\\|token\\\\|secret\\\\|key\" /c/Users/PC_Desk/Desktop/eduauto-platform/app/Http/Controllers/Api/*.php)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(awk '{print $NF}')"
     ]
   }
 }

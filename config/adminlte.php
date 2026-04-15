@@ -325,6 +325,18 @@ return [
             'icon'  => 'fas fa-fw fa-compress-alt',
         ],
 
+        ['header' => 'APPLICATIONS'],
+        [
+            'text'  => 'Dispatch Inbox',
+            'route' => 'admin.applications.dispatch.index',
+            'icon'  => 'fas fa-fw fa-inbox',
+        ],
+        [
+            'text'  => 'Application Pipeline',
+            'route' => 'admin.applications.pipeline.index',
+            'icon'  => 'fas fa-fw fa-stream',
+        ],
+
         ['header' => 'TEAM'],
         [
             'text'  => 'CS Agents',

@@ -22,6 +22,8 @@ class Student extends Model
         'next_followup_date', 'next_followup_note',
         'source',
         'cancellation_reason', 'cancellation_justified',
+        'application_status', 'application_notes',
+        'college_application_date', 'college_response_date', 'offer_letter_received_at',
     ];
 
     protected $casts = [
@@ -33,6 +35,9 @@ class Student extends Model
         'visa_expiry_date'    => 'date',
         'date_of_birth'       => 'date',
         'next_followup_date'  => 'date',
+        'college_application_date' => 'date',
+        'college_response_date'    => 'date',
+        'offer_letter_received_at' => 'datetime',
         'sales_price'        => 'decimal:2',
         'sales_price_scholarship' => 'decimal:2',
     ];
@@ -70,6 +75,11 @@ class Student extends Model
     public function scheduledMessages()
     {
         return $this->hasMany(ScheduledStudentMessage::class);
+    }
+
+    public function chats()
+    {
+        return $this->hasMany(StudentChat::class)->orderBy('created_at');
     }
 
     public static function statusLabel(string $status): string
@@ -119,5 +129,31 @@ class Student extends Model
             'cancelled',
             'concluded',
         ];
+    }
+
+    public static function allApplicationStatuses(): array
+    {
+        return [
+            'new_dispatch',
+            'in_review',
+            'applied',
+            'waiting_college',
+            'offer_received',
+            'rejected',
+        ];
+    }
+
+    public static function applicationStatusLabel(?string $status): string
+    {
+        return match($status) {
+            'new_dispatch'    => 'New Dispatch',
+            'in_review'       => 'In Review',
+            'applied'         => 'Applied to College',
+            'waiting_college' => 'Waiting College Response',
+            'offer_received'  => 'Offer Received',
+            'rejected'        => 'Rejected',
+            null, ''          => '—',
+            default           => ucfirst(str_replace('_', ' ', $status)),
+        };
     }
 }

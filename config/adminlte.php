@@ -63,7 +63,7 @@ return [
     |
     */
 
-    'logo' => '<b style="color:#F26522">CI</b><span style="color:#fff">CORE</span>',
+    'logo' => '<span style="color:#fff">CORE</span>',
     'logo_img' => 'img/ci-logo.png',
     'logo_img_class' => 'brand-image elevation-3',
     'logo_img_xl' => null,
@@ -113,8 +113,8 @@ return [
         'enabled' => true,
         'mode' => 'fullscreen',
         'img' => [
-            'path' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
-            'alt' => 'AdminLTE Preloader Image',
+            'path' => 'img/ci-logo.png',
+            'alt' => 'CICORE',
             'effect' => 'animation__shake',
             'width' => 60,
             'height' => 60,

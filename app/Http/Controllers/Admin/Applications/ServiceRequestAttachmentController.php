@@ -16,4 +16,16 @@ class ServiceRequestAttachmentController extends Controller
 
         return Storage::disk('local')->download($attachment->stored_path, $attachment->original_name);
     }
+
+    public function view(ServiceRequestAttachment $attachment)
+    {
+        if (!Storage::disk('local')->exists($attachment->stored_path)) {
+            abort(404);
+        }
+
+        return response()->file(
+            Storage::disk('local')->path($attachment->stored_path),
+            ['Content-Type' => $attachment->mime_type]
+        );
+    }
 }

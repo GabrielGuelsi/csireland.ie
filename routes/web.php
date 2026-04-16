@@ -105,6 +105,7 @@ Route::middleware(['auth', 'admin_or_application'])->prefix('admin')->name('admi
         Route::get('service-requests/{serviceRequest}',       [AppServiceRequestController::class, 'show'])->name('service-requests.show');
         Route::patch('service-requests/{serviceRequest}',     [AppServiceRequestController::class, 'update'])->name('service-requests.update');
         Route::get('service-requests/attachments/{attachment}/download', [AppAttachmentController::class, 'download'])->name('service-requests.attachments.download');
+        Route::get('service-requests/attachments/{attachment}/view',     [AppAttachmentController::class, 'view'])->name('service-requests.attachments.view');
         Route::get('students/{student}',       [ApplicationStudentController::class, 'show'])->name('students.show');
         Route::match(['PUT','PATCH'], 'students/{student}', [ApplicationStudentController::class, 'update'])->name('students.update');
     });

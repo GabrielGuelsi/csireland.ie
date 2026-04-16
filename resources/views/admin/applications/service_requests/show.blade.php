@@ -78,23 +78,25 @@
         @if($serviceRequest->attachments->isNotEmpty())
         <div class="card">
             <div class="card-header"><h3 class="card-title">Attachments</h3></div>
-            <div class="card-body p-0">
-                <table class="table table-sm mb-0">
-                    <tbody>
-                        @foreach($serviceRequest->attachments as $att)
-                        <tr>
-                            <td>
-                                <i class="fas fa-{{ str_starts_with($att->mime_type, 'image/') ? 'image' : 'file-pdf' }} mr-1"></i>
-                                {{ $att->original_name }}
-                                <small class="text-muted">({{ number_format($att->size / 1024, 0) }} KB)</small>
-                            </td>
-                            <td class="text-right">
-                                <a href="{{ route('admin.applications.service-requests.attachments.download', $att) }}" class="btn btn-xs btn-outline-primary">Download</a>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+            <div class="card-body">
+                @foreach($serviceRequest->attachments as $att)
+                <div class="mb-3">
+                    @if(str_starts_with($att->mime_type, 'image/'))
+                        <a href="{{ route('admin.applications.service-requests.attachments.view', $att) }}" target="_blank">
+                            <img src="{{ route('admin.applications.service-requests.attachments.view', $att) }}"
+                                 alt="{{ $att->original_name }}"
+                                 style="max-width:100%;max-height:400px;border-radius:6px;border:1px solid #ddd;">
+                        </a>
+                    @else
+                        <i class="fas fa-file-pdf mr-1"></i>
+                        <a href="{{ route('admin.applications.service-requests.attachments.download', $att) }}">{{ $att->original_name }}</a>
+                    @endif
+                    <div class="text-muted" style="font-size:12px;">
+                        {{ $att->original_name }} ({{ number_format($att->size / 1024, 0) }} KB)
+                        — <a href="{{ route('admin.applications.service-requests.attachments.download', $att) }}">Download</a>
+                    </div>
+                </div>
+                @endforeach
             </div>
         </div>
         @endif

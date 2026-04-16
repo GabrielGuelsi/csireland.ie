@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\Applications\StudentChatController;
 use App\Http\Controllers\Admin\AssignmentRuleController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DuplicateController;
+use App\Http\Controllers\Admin\InfluencerController;
 use App\Http\Controllers\Admin\MessageSequenceController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SalesConsultantController;
@@ -83,6 +84,9 @@ Route::middleware(['auth', 'admin_or_application'])->prefix('admin')->name('admi
     // Alert Rules
     Route::resource('alert-rules', AlertRuleController::class)->names('alert-rules');
     Route::patch('alert-rules/{alertRule}/toggle', [AlertRuleController::class, 'toggle'])->name('alert-rules.toggle');
+
+    // Influencers (Marketing)
+    Route::resource('influencers', InfluencerController::class)->names('influencers')->except(['show', 'create', 'edit']);
 
     // Reports
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');

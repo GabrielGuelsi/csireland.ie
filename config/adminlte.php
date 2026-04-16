@@ -397,6 +397,14 @@ return [
             'can'   => 'access-admin',
         ],
 
+        ['header' => 'MARKETING', 'can' => 'access-admin'],
+        [
+            'text'  => 'Influencers',
+            'route' => 'admin.influencers.index',
+            'icon'  => 'fas fa-fw fa-bullhorn',
+            'can'   => 'access-admin',
+        ],
+
         ['header' => 'ANALYTICS', 'can' => 'access-admin'],
         [
             'text'  => 'Reports',

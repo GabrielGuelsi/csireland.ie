@@ -28,7 +28,18 @@ class StudentController extends Controller
             return response()->json(['student' => null]);
         }
 
-        $student = Student::with(['salesConsultant', 'assignedAgent', 'notes.author', 'stageLogs'])
+        $user = $request->user();
+
+        // Only eager-load the heavy relations when the caller is authorised
+        // to see them (own student, unassigned, or admin). For other agents'
+        // students we return a minimal "known student, not yours" shape to
+        // prevent phone-based profile enumeration.
+        $ownsOrAdmin = fn (Student $s) =>
+            $user->isAdmin()
+            || $s->assigned_cs_agent_id === null
+            || $s->assigned_cs_agent_id === $user->id;
+
+        $student = Student::with('assignedAgent')
             ->where('whatsapp_phone', $phone)
             ->first();
 
@@ -36,7 +47,13 @@ class StudentController extends Controller
             return response()->json(['student' => null]);
         }
 
-        return response()->json(['student' => $this->formatStudent($student)]);
+        if ($ownsOrAdmin($student)) {
+            // Re-fetch with the full relation set the renderer needs
+            $student->load(['salesConsultant', 'notes.author', 'stageLogs']);
+            return response()->json(['student' => $this->formatStudent($student)]);
+        }
+
+        return response()->json(['student' => $this->formatStudentMinimal($student)]);
     }
 
     // GET /api/students/search?q=X
@@ -387,6 +404,27 @@ class StudentController extends Controller
                     'created_at' => $n->created_at->toIso8601String(),
                 ])->values()
                 : [],
+        ];
+    }
+
+    /**
+     * Minimal student shape for /api/students/match when the student is
+     * NOT assigned to the caller. Tells the extension "yes this number is
+     * a known student, and here's who owns them" without leaking email,
+     * price, notes, observations, SLA, or any contact history.
+     *
+     * The extension's renderStudentCard() degrades gracefully on missing
+     * fields — the card shows basic info and hides the sensitive sections.
+     */
+    private function formatStudentMinimal(Student $student): array
+    {
+        return [
+            'id'                  => $student->id,
+            'name'                => $student->name,
+            'status'              => $student->status,
+            'status_label'        => Student::statusLabel($student->status ?? ''),
+            'assigned_agent_name' => $student->assignedAgent?->name,
+            'restricted'          => true,
         ];
     }
 }

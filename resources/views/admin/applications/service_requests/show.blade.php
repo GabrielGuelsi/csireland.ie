@@ -89,7 +89,7 @@
                                 <small class="text-muted">({{ number_format($att->size / 1024, 0) }} KB)</small>
                             </td>
                             <td class="text-right">
-                                <a href="{{ url('api/service-request-attachments/' . $att->id . '/download') }}" class="btn btn-xs btn-outline-primary">Download</a>
+                                <a href="{{ route('admin.applications.service-requests.attachments.download', $att) }}" class="btn btn-xs btn-outline-primary">Download</a>
                             </td>
                         </tr>
                         @endforeach

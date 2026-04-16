@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AlertRuleController;
 use App\Http\Controllers\Admin\Applications\ApplicationPipelineController;
 use App\Http\Controllers\Admin\Applications\ApplicationStudentController;
 use App\Http\Controllers\Admin\Applications\DispatchController;
+use App\Http\Controllers\Admin\Applications\ServiceRequestAttachmentController as AppAttachmentController;
 use App\Http\Controllers\Admin\Applications\ServiceRequestController as AppServiceRequestController;
 use App\Http\Controllers\Admin\Applications\StudentChatController;
 use App\Http\Controllers\Admin\AssignmentRuleController;
@@ -103,6 +104,7 @@ Route::middleware(['auth', 'admin_or_application'])->prefix('admin')->name('admi
         Route::get('service-requests/cancellations',          [AppServiceRequestController::class, 'cancellations'])->name('service-requests.cancellations');
         Route::get('service-requests/{serviceRequest}',       [AppServiceRequestController::class, 'show'])->name('service-requests.show');
         Route::patch('service-requests/{serviceRequest}',     [AppServiceRequestController::class, 'update'])->name('service-requests.update');
+        Route::get('service-requests/attachments/{attachment}/download', [AppAttachmentController::class, 'download'])->name('service-requests.attachments.download');
         Route::get('students/{student}',       [ApplicationStudentController::class, 'show'])->name('students.show');
         Route::match(['PUT','PATCH'], 'students/{student}', [ApplicationStudentController::class, 'update'])->name('students.update');
     });

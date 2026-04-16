@@ -52,6 +52,26 @@ class ServiceRequest extends Model
         return self::STATUSES[$this->type] ?? [];
     }
 
+    // ── Chat message helpers ────────────────────────────────────────────────
+
+    public static function buildSubmissionMessage(string $type, array $data, string $agentName): string
+    {
+        $label = self::TYPE_LABELS[$type] ?? $type;
+
+        return match ($type) {
+            'documentation' => "[{$label}] submitted by {$agentName}. University: {$data['university']}. Emergency fee: " . (($data['emergency_fee_paid'] ?? false) ? 'Yes' : 'No') . ".",
+            'refund'        => "[{$label}] submitted by {$agentName}. Reason: {$data['reason']}. Amount: €" . number_format($data['refund_amount'] ?? 0, 2) . ".",
+            'cancellation'  => "[{$label}] submitted by {$agentName}. Reason: {$data['reason']}.",
+            default         => "[{$label}] submitted by {$agentName}.",
+        };
+    }
+
+    public static function buildCompletionMessage(string $type): string
+    {
+        $label = self::TYPE_LABELS[$type] ?? $type;
+        return "[{$label}] marked as completed.";
+    }
+
     // ── Relationships ────────────────────────────────────────────────────────
 
     public function student()
@@ -62,5 +82,10 @@ class ServiceRequest extends Model
     public function requester()
     {
         return $this->belongsTo(User::class, 'requested_by');
+    }
+
+    public function attachments()
+    {
+        return $this->hasMany(ServiceRequestAttachment::class);
     }
 }

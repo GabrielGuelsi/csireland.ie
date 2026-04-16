@@ -73,6 +73,31 @@
                 </dl>
             </div>
         </div>
+
+        {{-- Attachments --}}
+        @if($serviceRequest->attachments->isNotEmpty())
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Attachments</h3></div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        @foreach($serviceRequest->attachments as $att)
+                        <tr>
+                            <td>
+                                <i class="fas fa-{{ str_starts_with($att->mime_type, 'image/') ? 'image' : 'file-pdf' }} mr-1"></i>
+                                {{ $att->original_name }}
+                                <small class="text-muted">({{ number_format($att->size / 1024, 0) }} KB)</small>
+                            </td>
+                            <td class="text-right">
+                                <a href="{{ url('api/service-request-attachments/' . $att->id . '/download') }}" class="btn btn-xs btn-outline-primary">Download</a>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @endif
     </div>
 
     {{-- Status & notes --}}

@@ -70,7 +70,7 @@
                 <h3 class="card-title">Submit Request</h3>
             </div>
             <div class="card-body">
-                <form method="POST" action="{{ route('my.students.serviceRequests.store', $student) }}" id="service-request-form">
+                <form method="POST" action="{{ route('my.students.serviceRequests.store', $student) }}" id="service-request-form" enctype="multipart/form-data">
                     @csrf
                     <div class="form-group">
                         <label>Request type <span class="text-danger">*</span></label>
@@ -139,6 +139,10 @@
                         <div class="form-group">
                             <label>Reason <span class="text-danger">*</span></label>
                             <textarea name="data[reason]" class="form-control" rows="2"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Attachments <small class="text-muted">(max 3 files, 5MB each — images or PDF)</small></label>
+                            <input type="file" name="attachments[]" class="form-control-file" multiple accept="image/*,.pdf">
                         </div>
                     </div>
 

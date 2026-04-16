@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Applications;
 
 use App\Http\Controllers\Controller;
 use App\Models\ServiceRequest;
+use App\Models\StudentChat;
 use Illuminate\Http\Request;
 
 class ServiceRequestController extends Controller
@@ -36,7 +37,7 @@ class ServiceRequestController extends Controller
 
     public function show(ServiceRequest $serviceRequest)
     {
-        $serviceRequest->load(['student.salesConsultant', 'student.assignedAgent', 'requester']);
+        $serviceRequest->load(['student.salesConsultant', 'student.assignedAgent', 'requester', 'attachments']);
         $statuses = $serviceRequest->validStatuses();
 
         return view('admin.applications.service_requests.show', compact('serviceRequest', 'statuses'));
@@ -68,7 +69,22 @@ class ServiceRequestController extends Controller
             $update['data'] = $data;
         }
 
+        $previousStatus = $serviceRequest->status;
         $serviceRequest->update($update);
+
+        // On completion: post chat message + handle cancellation status
+        if ($request->status === 'completed' && $previousStatus !== 'completed') {
+            StudentChat::create([
+                'student_id'  => $serviceRequest->student_id,
+                'author_id'   => $request->user()->id,
+                'author_role' => $request->user()->role ?? 'application',
+                'body'        => ServiceRequest::buildCompletionMessage($serviceRequest->type),
+            ]);
+
+            if ($serviceRequest->type === 'cancellation') {
+                $serviceRequest->student->update(['application_status' => 'rejected']);
+            }
+        }
 
         return back()->with('success', 'Request updated.');
     }

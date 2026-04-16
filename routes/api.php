@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\MessageLogController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\NoteController;
 use App\Http\Controllers\Api\ScheduledMessageController;
+use App\Http\Controllers\Api\ServiceRequestAttachmentController;
 use App\Http\Controllers\Api\ServiceRequestController;
 use App\Http\Controllers\Api\SlaController;
 use App\Http\Controllers\Api\StudentController;
@@ -62,6 +63,7 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     // Service requests
     Route::post('service-requests',                          [ServiceRequestController::class, 'store']);
     Route::get('service-requests/student/{student_id}',      [ServiceRequestController::class, 'forStudent']);
+    Route::get('service-request-attachments/{attachment}/download', [ServiceRequestAttachmentController::class, 'download']);
 
     // Scheduled messages
     Route::get('scheduled-messages/pending',                      [ScheduledMessageController::class, 'pending']);

@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AlertRuleController;
 use App\Http\Controllers\Admin\Applications\ApplicationPipelineController;
 use App\Http\Controllers\Admin\Applications\ApplicationStudentController;
 use App\Http\Controllers\Admin\Applications\DispatchController;
+use App\Http\Controllers\Admin\Applications\ServiceRequestController as AppServiceRequestController;
 use App\Http\Controllers\Admin\Applications\StudentChatController;
 use App\Http\Controllers\Admin\AssignmentRuleController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\Admin\SlaSettingController;
 use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Admin\TemplateController;
 use App\Http\Controllers\My\DashboardController as MyDashboardController;
+use App\Http\Controllers\My\ServiceRequestController as MyServiceRequestController;
 use App\Http\Controllers\My\NotificationController as MyNotificationController;
 use App\Http\Controllers\My\StudentController as MyStudentController;
 use App\Http\Controllers\ProfileController;
@@ -96,6 +98,11 @@ Route::middleware(['auth', 'admin_or_application'])->prefix('admin')->name('admi
         Route::get('dispatch',                 [DispatchController::class, 'index'])->name('dispatch.index');
         Route::post('dispatch/{student}/accept', [DispatchController::class, 'accept'])->name('dispatch.accept');
         Route::get('pipeline',                 [ApplicationPipelineController::class, 'index'])->name('pipeline.index');
+        Route::get('service-requests/documentation',            [AppServiceRequestController::class, 'documentation'])->name('service-requests.documentation');
+        Route::get('service-requests/refunds',                [AppServiceRequestController::class, 'refunds'])->name('service-requests.refunds');
+        Route::get('service-requests/cancellations',          [AppServiceRequestController::class, 'cancellations'])->name('service-requests.cancellations');
+        Route::get('service-requests/{serviceRequest}',       [AppServiceRequestController::class, 'show'])->name('service-requests.show');
+        Route::patch('service-requests/{serviceRequest}',     [AppServiceRequestController::class, 'update'])->name('service-requests.update');
         Route::get('students/{student}',       [ApplicationStudentController::class, 'show'])->name('students.show');
         Route::match(['PUT','PATCH'], 'students/{student}', [ApplicationStudentController::class, 'update'])->name('students.update');
     });
@@ -126,6 +133,7 @@ Route::middleware(['auth', 'cs_agent'])->prefix('my')->name('my.')->group(functi
     Route::patch('students/{student}/gift-received', [MyStudentController::class, 'markGiftReceived'])->name('students.giftReceived');
     Route::patch('students/{student}/followup', [MyStudentController::class, 'updateFollowup'])->name('students.followup');
     Route::post('students/{student}/notes',     [MyStudentController::class, 'addNote'])->name('students.notes.store');
+    Route::post('students/{student}/service-requests', [MyServiceRequestController::class, 'store'])->name('students.serviceRequests.store');
     Route::patch('scheduled-messages/{scheduledMessage}/sent', [MyStudentController::class, 'markScheduledSent'])->name('scheduledMessages.sent');
 
     // Notifications

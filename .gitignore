@@ -23,7 +23,7 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 *.csv
-
+/extension 2/
 # Chrome extension (local dev only)
 /extension/
 /extension.zip

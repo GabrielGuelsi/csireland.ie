@@ -7,6 +7,7 @@ use App\Http\Controllers\My\Concerns\OwnsStudents;
 use App\Models\MessageLog;
 use App\Models\Note;
 use App\Models\ScheduledStudentMessage;
+use App\Models\ServiceRequest;
 use App\Models\Student;
 use App\Models\StudentStageLog;
 use App\Services\SlaService;
@@ -51,7 +52,12 @@ class StudentController extends Controller
             ->orderBy('scheduled_for')
             ->get();
 
-        return view('my.students.show', compact('student', 'sla', 'scheduledMessages'));
+        $serviceRequests = ServiceRequest::where('student_id', $student->id)
+            ->with('requester:id,name')
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('my.students.show', compact('student', 'sla', 'scheduledMessages', 'serviceRequests'));
     }
 
     public function updateStage(Request $request, Student $student)

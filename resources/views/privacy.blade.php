@@ -27,51 +27,103 @@
   </p>
   <p>This extension is not available to the general public and is intended solely for authorised CI Ireland staff.</p>
 
-  <h2>2. Data Collected</h2>
-  <p>The extension collects and stores the following data on the user's device:</p>
+  <h2>2. Data Collection</h2>
+  <p>The extension collects and stores the following data on the user's device via Chrome's <code>chrome.storage.local</code> API:</p>
   <ul>
     <li>
       <strong>Authentication token:</strong> A session token issued by the CI Ireland backend
-      (<code>cs.ciireland.ie</code>) upon login. Stored locally using Chrome's
-      <code>chrome.storage.local</code> API so the agent remains logged in between sessions.
-      This token is never shared with any third party.
+      (<code>cs.ciireland.ie</code>) upon login, used to authenticate subsequent API requests.
     </li>
     <li>
-      <strong>Agent preferences:</strong> The agent's selected display language, stored locally
-      in <code>chrome.storage.local</code>.
+      <strong>Agent identity:</strong> The agent's name and internal user ID, used to personalise the sidebar interface.
+    </li>
+    <li>
+      <strong>Display language preference:</strong> The agent's selected language for the extension UI.
+    </li>
+    <li>
+      <strong>API server URL:</strong> The backend server address the extension communicates with.
     </li>
   </ul>
   <p>The extension does <strong>not</strong> read, collect, or transmit WhatsApp message content.</p>
   <p>The extension does <strong>not</strong> track browsing history or any activity outside of WhatsApp Web.</p>
+  <p>The extension does <strong>not</strong> use cookies, analytics services, or advertising trackers.</p>
 
-  <h2>3. Data Transmitted</h2>
+  <h2>3. Data Processing</h2>
   <p>
-    All API communication occurs exclusively between the extension and the CI Ireland backend server at
-    <strong>cs.ciireland.ie</strong>, which is operated by CI Ireland. No data is sent to any third-party
-    service or analytics platform.
+    The extension processes data solely to provide its core functionality &mdash; matching WhatsApp contacts
+    to student records and enabling agents to manage those records. Specifically:
   </p>
-  <p>Data transmitted includes:</p>
   <ul>
-    <li>The agent's authentication token (in request headers)</li>
-    <li>Student record updates made by the agent (status changes, notes, follow-up dates)</li>
-    <li>Phone number lookups to match an open WhatsApp chat to a student record</li>
+    <li>
+      <strong>Phone number matching:</strong> When an agent opens a WhatsApp chat, the extension reads the
+      contact's phone number from the chat header and sends it to the CI Ireland backend to look up the
+      corresponding student record. The phone number is not stored locally.
+    </li>
+    <li>
+      <strong>Student record management:</strong> The extension displays student information retrieved from
+      the backend and submits updates (status changes, notes, follow-up dates, priority changes) as directed
+      by the agent.
+    </li>
+    <li>
+      <strong>Message templating:</strong> The extension retrieves pre-approved message templates from the
+      backend and inserts the selected template text into the WhatsApp message input field. It does not send
+      messages automatically.
+    </li>
   </ul>
+  <p>All data processing is performed on behalf of CI Ireland for the purpose of student relationship management.</p>
 
-  <h2>4. Data Retention</h2>
+  <h2>4. Data Storage</h2>
   <p>
-    The authentication token is stored until the agent explicitly logs out, at which point it is
-    deleted from local storage. No other persistent data is stored by the extension on the device.
+    Data stored locally on the device is limited to the items listed in Section 2 (authentication token,
+    agent identity, language preference, and server URL). This data is stored using Chrome's
+    <code>chrome.storage.local</code> API and persists until:
+  </p>
+  <ul>
+    <li>The agent explicitly logs out (which clears all stored data), or</li>
+    <li>The extension is uninstalled from the browser.</li>
+  </ul>
+  <p>
+    Student records, notes, and all other business data are stored exclusively on CI Ireland's backend
+    server (<code>cs.ciireland.ie</code>), which is hosted on a private VPS operated by CI Ireland.
+    The extension does not maintain a local copy of this data between sessions.
   </p>
 
-  <h2>5. Third Parties</h2>
+  <h2>5. Data Sharing and Disclosure</h2>
   <p>
-    We do not sell, transfer, or disclose user data to any third party. Data is used solely to
-    operate the CI Ireland Customer Success platform.
+    We do <strong>not</strong> sell, rent, trade, or otherwise transfer any user data to third parties.
+  </p>
+  <p>
+    All data transmitted by the extension is sent exclusively to CI Ireland's own backend server at
+    <code>cs.ciireland.ie</code>. No data is sent to any third-party service, analytics platform,
+    advertising network, or external API.
+  </p>
+  <p>
+    Data may only be disclosed if required by law or a valid legal process (e.g. a court order).
   </p>
 
-  <h2>6. Contact</h2>
+  <h2>6. Data Security</h2>
   <p>
-    For any questions regarding this privacy policy, please contact us at
+    All communication between the extension and the backend server occurs over HTTPS (TLS-encrypted connections).
+    API requests are authenticated using a bearer token with a limited expiry period. The extension enforces a
+    strict Content Security Policy and restricts its network access to authorised domains only.
+  </p>
+
+  <h2>7. User Rights</h2>
+  <p>
+    Authorised users (CI Ireland staff) may request access to, correction of, or deletion of their personal
+    data at any time by contacting CI Ireland. Logging out of the extension immediately removes all locally
+    stored data from the device.
+  </p>
+
+  <h2>8. Changes to This Policy</h2>
+  <p>
+    We may update this Privacy Policy from time to time. Any changes will be reflected on this page with an
+    updated revision date. Continued use of the extension after changes constitutes acceptance of the revised policy.
+  </p>
+
+  <h2>9. Contact</h2>
+  <p>
+    For any questions regarding this privacy policy or how your data is handled, please contact us at
     <a href="mailto:info@ciireland.ie">info@ciireland.ie</a>.
   </p>
 

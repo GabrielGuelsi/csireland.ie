@@ -362,6 +362,24 @@ return [
             'icon'  => 'fas fa-fw fa-stream',
             'can'   => 'access-admin',
         ],
+        [
+            'text'  => 'Doc Requests',
+            'route' => 'admin.applications.service-requests.documentation',
+            'icon'  => 'fas fa-fw fa-file-alt',
+            'can'   => 'access-admin',
+        ],
+        [
+            'text'  => 'Refunds',
+            'route' => 'admin.applications.service-requests.refunds',
+            'icon'  => 'fas fa-fw fa-undo-alt',
+            'can'   => 'access-admin',
+        ],
+        [
+            'text'  => 'Cancellations',
+            'route' => 'admin.applications.service-requests.cancellations',
+            'icon'  => 'fas fa-fw fa-times-circle',
+            'can'   => 'access-admin',
+        ],
 
         ['header' => 'TEAM', 'can' => 'access-admin'],
         [

@@ -7,7 +7,7 @@
 @stop
 
 @section('content')
-@php use App\Models\Student; @endphp
+@php use App\Models\Student; use App\Models\ServiceRequest; @endphp
 
 @if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
 @if($errors->any())<div class="alert alert-danger"><ul class="mb-0">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>@endif
@@ -56,6 +56,114 @@
                                     <button class="btn btn-sm btn-success">Mark sent</button>
                                 </form>
                             </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        @endif
+
+        {{-- Submit service request --}}
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Submit Request</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ route('my.students.serviceRequests.store', $student) }}" id="service-request-form">
+                    @csrf
+                    <div class="form-group">
+                        <label>Request type <span class="text-danger">*</span></label>
+                        <select name="type" id="sr-type" class="form-control" required>
+                            <option value="">Select…</option>
+                            <option value="documentation">Document Request</option>
+                            <option value="refund">Refund</option>
+                            <option value="cancellation">Cancellation</option>
+                        </select>
+                    </div>
+
+                    {{-- Documentation fields --}}
+                    <div id="sr-fields-documentation" class="sr-fields d-none">
+                        <div class="form-group">
+                            <label>Sales Consultant <span class="text-danger">*</span></label>
+                            <input type="text" name="data[sales_consultant]" class="form-control" value="{{ $student->salesConsultant?->name }}">
+                        </div>
+                        <div class="form-group">
+                            <label>University <span class="text-danger">*</span></label>
+                            <input type="text" name="data[university]" class="form-control" value="{{ $student->university }}">
+                        </div>
+                        <div class="form-group">
+                            <label>Emergency fee paid? <span class="text-danger">*</span></label>
+                            <select name="data[emergency_fee_paid]" class="form-control">
+                                <option value="">Select…</option>
+                                <option value="1">Yes</option>
+                                <option value="0">No</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    {{-- Refund fields --}}
+                    <div id="sr-fields-refund" class="sr-fields d-none">
+                        <div class="form-group">
+                            <label>Date student requested refund <span class="text-danger">*</span></label>
+                            <input type="date" name="data[student_requested_at]" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Reason <span class="text-danger">*</span></label>
+                            <textarea name="data[reason]" class="form-control" rows="2"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Bank name (account holder) <span class="text-danger">*</span></label>
+                            <input type="text" name="data[bank_name]" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>IBAN <span class="text-danger">*</span></label>
+                            <input type="text" name="data[bank_iban]" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Refund amount (€) <span class="text-danger">*</span></label>
+                            <input type="number" step="0.01" name="data[refund_amount]" class="form-control">
+                        </div>
+                    </div>
+
+                    {{-- Cancellation fields --}}
+                    <div id="sr-fields-cancellation" class="sr-fields d-none">
+                        <div class="form-group">
+                            <label>Sales Consultant <span class="text-danger">*</span></label>
+                            <input type="text" name="data[sales_consultant]" class="form-control" value="{{ $student->salesConsultant?->name }}">
+                        </div>
+                        <div class="form-group">
+                            <label>University <span class="text-danger">*</span></label>
+                            <input type="text" name="data[university]" class="form-control" value="{{ $student->university }}">
+                        </div>
+                        <div class="form-group">
+                            <label>Reason <span class="text-danger">*</span></label>
+                            <textarea name="data[reason]" class="form-control" rows="2"></textarea>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block" id="sr-submit" disabled>Submit Request</button>
+                </form>
+            </div>
+        </div>
+
+        {{-- Request history --}}
+        @if($serviceRequests->isNotEmpty())
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Request History</h3></div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Type</th><th>Status</th><th>By</th><th>Date</th></tr></thead>
+                    <tbody>
+                        @foreach($serviceRequests as $sr)
+                        <tr>
+                            <td>{{ ServiceRequest::TYPE_LABELS[$sr->type] ?? $sr->type }}</td>
+                            <td>
+                                @php $badge = match($sr->status) { 'pending' => 'warning', 'in_review' => 'info', 'scheduled' => 'info', 'approved' => 'primary', 'completed' => 'success', 'rejected' => 'danger', default => 'secondary' }; @endphp
+                                <span class="badge badge-{{ $badge }}">{{ ServiceRequest::STATUS_LABELS[$sr->status] ?? $sr->status }}</span>
+                            </td>
+                            <td>{{ $sr->requester?->name ?? '—' }}</td>
+                            <td>{{ $sr->created_at->format('d M Y') }}</td>
                         </tr>
                         @endforeach
                     </tbody>
@@ -205,3 +313,18 @@
     </div>
 </div>
 @stop
+
+@push('js')
+<script>
+document.getElementById('sr-type').addEventListener('change', function() {
+    document.querySelectorAll('.sr-fields').forEach(el => el.classList.add('d-none'));
+    const btn = document.getElementById('sr-submit');
+    if (this.value) {
+        document.getElementById('sr-fields-' + this.value).classList.remove('d-none');
+        btn.disabled = false;
+    } else {
+        btn.disabled = true;
+    }
+});
+</script>
+@endpush

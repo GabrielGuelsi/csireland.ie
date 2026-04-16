@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\MessageLogController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\NoteController;
 use App\Http\Controllers\Api\ScheduledMessageController;
+use App\Http\Controllers\Api\ServiceRequestController;
 use App\Http\Controllers\Api\SlaController;
 use App\Http\Controllers\Api\StudentController;
 use App\Http\Controllers\Api\TemplateController;
@@ -57,6 +58,10 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
 
     // SLA settings
     Route::get('sla-settings', [SlaController::class, 'index']);
+
+    // Service requests
+    Route::post('service-requests',                          [ServiceRequestController::class, 'store']);
+    Route::get('service-requests/student/{student_id}',      [ServiceRequestController::class, 'forStudent']);
 
     // Scheduled messages
     Route::get('scheduled-messages/pending',                      [ScheduledMessageController::class, 'pending']);

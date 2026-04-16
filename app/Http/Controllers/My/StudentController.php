@@ -64,9 +64,14 @@ class StudentController extends Controller
     {
         $this->authorizeOwnership($student);
 
-        $data = $request->validate([
-            'status' => 'required|in:' . implode(',', Student::allStatuses()),
-        ]);
+        $rules = ['status' => 'required|in:' . implode(',', Student::allStatuses())];
+
+        if ($request->status === 'cancelled') {
+            $rules['cancellation_reason']    = 'required|string|max:1000';
+            $rules['cancellation_justified'] = 'required|boolean';
+        }
+
+        $data = $request->validate($rules);
 
         $fromStage = $student->status;
         if ($fromStage !== $data['status']) {
@@ -85,6 +90,11 @@ class StudentController extends Controller
                 $updates['first_contacted_at'] = now();
             }
             $updates['last_contacted_at'] = now();
+
+            if ($data['status'] === 'cancelled') {
+                $updates['cancellation_reason']    = $request->cancellation_reason;
+                $updates['cancellation_justified'] = (bool) $request->cancellation_justified;
+            }
 
             $student->update($updates);
         }

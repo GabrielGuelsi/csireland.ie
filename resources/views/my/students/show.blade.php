@@ -199,13 +199,26 @@
         <div class="card">
             <div class="card-header"><h3 class="card-title">Status</h3></div>
             <div class="card-body">
-                <form method="POST" action="{{ route('my.students.stage', $student) }}">
+                <form method="POST" action="{{ route('my.students.stage', $student) }}" id="status-form">
                     @csrf @method('PATCH')
-                    <select name="status" class="form-control mb-2">
+                    <select name="status" id="status-select" class="form-control mb-2">
                         @foreach(Student::allStatuses() as $st)
                             <option value="{{ $st }}" @selected($student->status === $st)>{{ Student::statusLabel($st) }}</option>
                         @endforeach
                     </select>
+                    <div id="cancellation-fields" class="d-none">
+                        <div class="form-group mb-2">
+                            <label class="mb-1">Reason <span class="text-danger">*</span></label>
+                            <textarea name="cancellation_reason" class="form-control" rows="2" placeholder="Why is this student being cancelled?"></textarea>
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="mb-1">Was this cancellation justified?</label>
+                            <select name="cancellation_justified" class="form-control">
+                                <option value="1">Yes — justified</option>
+                                <option value="0">No — avoidable</option>
+                            </select>
+                        </div>
+                    </div>
                     <button class="btn btn-sm btn-primary btn-block">Update status</button>
                 </form>
             </div>
@@ -316,6 +329,7 @@
 
 @push('js')
 <script>
+// Service request type toggle
 document.getElementById('sr-type').addEventListener('change', function() {
     document.querySelectorAll('.sr-fields').forEach(el => el.classList.add('d-none'));
     const btn = document.getElementById('sr-submit');
@@ -326,5 +340,22 @@ document.getElementById('sr-type').addEventListener('change', function() {
         btn.disabled = true;
     }
 });
+
+// Status change — show cancellation fields when "cancelled" is selected
+const statusSelect = document.getElementById('status-select');
+const cancelFields = document.getElementById('cancellation-fields');
+const reasonInput  = cancelFields.querySelector('[name="cancellation_reason"]');
+
+function toggleCancelFields() {
+    if (statusSelect.value === 'cancelled') {
+        cancelFields.classList.remove('d-none');
+        reasonInput.required = true;
+    } else {
+        cancelFields.classList.add('d-none');
+        reasonInput.required = false;
+    }
+}
+statusSelect.addEventListener('change', toggleCancelFields);
+toggleCancelFields(); // handle page load if already cancelled
 </script>
 @endpush

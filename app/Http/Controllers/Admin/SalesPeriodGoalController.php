@@ -38,7 +38,7 @@ class SalesPeriodGoalController extends Controller
     {
         $data = $this->validated($request);
 
-        return DB::transaction(function () use ($data) {
+        return DB::transaction(function () use ($data, $request) {
             $exists = SalesPeriodGoal::where('period_year', $data['period_year'])
                 ->where('period_month', $data['period_month'])
                 ->exists();
@@ -57,7 +57,7 @@ class SalesPeriodGoalController extends Controller
                 'team_wow'     => $data['team_wow'],
             ]);
 
-            $this->syncConsultantGoals($goal, $data['consultants'] ?? []);
+            $this->syncConsultantGoals($goal, $request->input('consultants', []));
 
             return redirect()
                 ->route('admin.sales-period-goals.index')
@@ -81,7 +81,7 @@ class SalesPeriodGoalController extends Controller
     {
         $data = $this->validated($request, $salesPeriodGoal->id);
 
-        return DB::transaction(function () use ($data, $salesPeriodGoal) {
+        return DB::transaction(function () use ($data, $salesPeriodGoal, $request) {
             $duplicate = SalesPeriodGoal::where('period_year', $data['period_year'])
                 ->where('period_month', $data['period_month'])
                 ->where('id', '!=', $salesPeriodGoal->id)
@@ -101,7 +101,7 @@ class SalesPeriodGoalController extends Controller
                 'team_wow'     => $data['team_wow'],
             ]);
 
-            $this->syncConsultantGoals($salesPeriodGoal, $data['consultants'] ?? []);
+            $this->syncConsultantGoals($salesPeriodGoal, $request->input('consultants', []));
 
             return redirect()
                 ->route('admin.sales-period-goals.index')

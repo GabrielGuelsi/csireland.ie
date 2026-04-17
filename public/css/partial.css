@@ -1,0 +1,334 @@
+/* Sales Partial infographic — matches the Canva "parcial de vendas" style */
+
+.partial-frame {
+    width: 640px;
+    margin: 0 auto;
+    background: #3a1e4a;
+    color: #fff;
+    font-family: "Montserrat", "Helvetica Neue", Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.35;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+}
+
+.partial-frame * {
+    box-sizing: border-box;
+}
+
+/* Header */
+.partial-header {
+    padding: 28px 36px 36px;
+    background: #3a1e4a;
+    position: relative;
+}
+
+.partial-header .logo {
+    height: 28px;
+    margin-bottom: 12px;
+    display: block;
+}
+
+.partial-header h1 {
+    font-size: 40px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin: 0;
+    line-height: 1.05;
+    color: #fff;
+}
+
+.partial-header h1 .accent-dot {
+    color: #fff;
+}
+
+.partial-header .fechamento {
+    display: inline-block;
+    margin-top: 6px;
+    font-family: "Caveat", cursive;
+    font-size: 26px;
+    color: #f08a1a;
+    transform: rotate(-3deg);
+}
+
+.partial-header .title-arc {
+    position: absolute;
+    top: 30px;
+    right: 36px;
+    width: 60px;
+    height: 60px;
+    border: 6px solid #f08a1a;
+    border-color: transparent #f08a1a transparent transparent;
+    border-radius: 50%;
+    transform: rotate(30deg);
+}
+
+/* Total revenue block */
+.partial-total {
+    background: #fff;
+    padding: 22px 36px;
+    color: #3a1e4a;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.partial-total .label {
+    font-size: 18px;
+    font-weight: 700;
+    color: #3a1e4a;
+    max-width: 230px;
+}
+
+.partial-total .label .sub {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: #7a6a85;
+    margin-top: 4px;
+}
+
+.partial-total .amount {
+    background: #f08a1a;
+    color: #fff;
+    padding: 10px 22px;
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    min-width: 260px;
+    text-align: center;
+}
+
+/* Targets strip */
+.partial-targets {
+    padding: 18px 36px;
+    background: #3a1e4a;
+}
+
+.partial-targets .headline {
+    font-size: 20px;
+    font-weight: 800;
+    margin-bottom: 10px;
+    letter-spacing: 0.5px;
+}
+
+.partial-targets .headline .lbl { color: #fff; }
+.partial-targets .headline .num-min { color: #fff; }
+.partial-targets .headline .lbl-target { color: #f08a1a; }
+.partial-targets .headline .num-target { color: #fff; }
+.partial-targets .headline .lbl-wow { color: #f08a1a; }
+.partial-targets .headline .num-wow { color: #fff; }
+
+/* Consultants table */
+.partial-table {
+    width: calc(100% - 72px);
+    margin: 0 36px 20px;
+    border-collapse: collapse;
+    background: #fff;
+    color: #3a1e4a;
+    font-size: 11px;
+}
+
+.partial-table th {
+    background: #f08a1a;
+    color: #fff;
+    font-weight: 700;
+    text-align: left;
+    padding: 10px 10px;
+    font-size: 11px;
+    border: 1px solid #3a1e4a;
+}
+
+.partial-table td {
+    padding: 12px 10px;
+    border: 1px solid #ddd;
+    vertical-align: middle;
+}
+
+.partial-table td.consultant {
+    background: #f08a1a;
+    color: #fff;
+    font-weight: 700;
+    text-transform: capitalize;
+}
+
+.partial-table td.result {
+    font-weight: 700;
+    color: #3a1e4a;
+    font-size: 13px;
+}
+
+.partial-table td.remaining {
+    color: #d0332a;
+    font-weight: 700;
+    font-size: 12px;
+}
+
+.partial-table td.remaining.hit {
+    color: #b55b00;
+}
+
+.partial-table tr.tier-separator td {
+    background: #f5b96a;
+    color: #fff;
+    font-weight: 700;
+    padding: 6px 10px;
+    font-size: 11px;
+    border: 1px solid #3a1e4a;
+}
+
+/* Comparison strip */
+.partial-compare {
+    background: #f08a1a;
+    padding: 20px 36px;
+    color: #fff;
+    text-align: center;
+}
+
+.partial-compare h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #3a1e4a;
+    margin: 0 0 14px;
+}
+
+.partial-compare .cells {
+    display: flex;
+    justify-content: space-around;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.partial-compare .cells .cell {
+    flex: 1;
+}
+
+.partial-compare .cells .big {
+    font-size: 30px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.5px;
+    display: inline-block;
+    padding: 0 4px;
+}
+
+.partial-compare .cells .big.brushed {
+    background: #3a1e4a;
+    color: #fff;
+    padding: 2px 10px;
+}
+
+.partial-compare .cells .small {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-top: 4px;
+    color: #fff;
+}
+
+/* Highlights */
+.partial-highlights {
+    padding: 22px 36px;
+    background: #3a1e4a;
+    position: relative;
+}
+
+.partial-highlights h3 {
+    font-size: 26px;
+    font-weight: 800;
+    margin: 0 0 10px;
+    color: #fff;
+}
+
+.partial-highlights ul {
+    list-style: disc;
+    padding-left: 20px;
+    margin: 0;
+}
+
+.partial-highlights ul li {
+    margin-bottom: 6px;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #fff;
+}
+
+/* Falta para meta */
+.partial-gap {
+    background: #f08a1a;
+    padding: 18px 36px 22px;
+    text-align: center;
+}
+
+.partial-gap h2 {
+    font-size: 30px;
+    font-weight: 800;
+    color: #3a1e4a;
+    margin: 0 0 14px;
+    letter-spacing: 0.5px;
+}
+
+.partial-gap h2 .o { color: #fff; }
+
+.partial-gap .cells {
+    display: flex;
+    justify-content: space-around;
+    align-items: baseline;
+}
+
+.partial-gap .cells .cell {
+    flex: 1;
+}
+
+.partial-gap .cells .v {
+    display: block;
+    font-size: 24px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.5px;
+}
+
+.partial-gap .cells .k {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #fff;
+    margin-top: 4px;
+}
+
+/* Footer days */
+.partial-days {
+    background: #3a1e4a;
+    padding: 22px 36px 28px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    justify-content: center;
+}
+
+.partial-days .clock {
+    font-size: 42px;
+    color: #fff;
+}
+
+.partial-days .txt {
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.2;
+}
+
+.partial-days .txt .num {
+    color: #f08a1a;
+}
+
+.partial-days .txt .lets {
+    font-family: "Caveat", cursive;
+    font-size: 24px;
+    color: #fff;
+    font-weight: 400;
+    margin-left: 8px;
+}

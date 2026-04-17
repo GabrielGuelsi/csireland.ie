@@ -15,6 +15,8 @@ use App\Http\Controllers\Admin\InfluencerController;
 use App\Http\Controllers\Admin\MessageSequenceController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SalesConsultantController;
+use App\Http\Controllers\Admin\SalesPartialController;
+use App\Http\Controllers\Admin\SalesPeriodGoalController;
 use App\Http\Controllers\Admin\SlaSettingController;
 use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Admin\TemplateController;
@@ -88,7 +90,16 @@ Route::middleware(['auth', 'admin_or_application'])->prefix('admin')->name('admi
     Route::resource('alert-rules', AlertRuleController::class)->names('alert-rules');
     Route::patch('alert-rules/{alertRule}/toggle', [AlertRuleController::class, 'toggle'])->name('alert-rules.toggle');
 
-    // Influencers (Marketing)
+    // Sales Management — goals + partials
+    Route::resource('sales-period-goals', SalesPeriodGoalController::class)
+        ->names('sales-period-goals')
+        ->except(['show']);
+
+    Route::resource('partials', SalesPartialController::class)
+        ->names('partials')
+        ->except(['edit', 'update']);
+
+    // Influencers (Sales Management)
     Route::resource('influencers', InfluencerController::class)->names('influencers')->except(['show', 'create', 'edit']);
 
     // Reports

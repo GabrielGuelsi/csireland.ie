@@ -9,6 +9,8 @@ class Student extends Model
 {
     use SoftDeletes;
 
+    const PARTIAL_COUNTABLE_PRODUCTS = ['higher_education', 'first_visa'];
+
     protected $fillable = [
         'name', 'email', 'whatsapp_phone',
         'product_type', 'product_type_other', 'course', 'university', 'intake',

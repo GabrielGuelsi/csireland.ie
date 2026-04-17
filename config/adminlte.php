@@ -415,7 +415,19 @@ return [
             'can'   => 'access-admin',
         ],
 
-        ['header' => 'MARKETING', 'can' => 'access-admin'],
+        ['header' => 'SALES MANAGEMENT', 'can' => 'access-admin'],
+        [
+            'text'  => 'Sales Goals',
+            'route' => 'admin.sales-period-goals.index',
+            'icon'  => 'fas fa-fw fa-bullseye',
+            'can'   => 'access-admin',
+        ],
+        [
+            'text'  => 'Partials',
+            'route' => 'admin.partials.index',
+            'icon'  => 'fas fa-fw fa-chart-pie',
+            'can'   => 'access-admin',
+        ],
         [
             'text'  => 'Influencers',
             'route' => 'admin.influencers.index',

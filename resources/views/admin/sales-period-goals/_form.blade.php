@@ -77,24 +77,23 @@
                 @foreach($consultants as $i => $consultant)
                     @php
                         $existing = $consultantGoalsById[$consultant->id] ?? null;
-                        $prefix = "consultants.$i";
                     @endphp
                     <tr>
                         <td>
                             {{ $consultant->name }}
-                            <input type="hidden" name="{{ $prefix }}[id]" value="{{ $consultant->id }}">
+                            <input type="hidden" name="consultants[{{ $i }}][id]" value="{{ $consultant->id }}">
                         </td>
                         <td>
-                            <input type="number" step="0.01" min="0" name="{{ $prefix }}[minima]" class="form-control form-control-sm text-right"
-                                   value="{{ old($prefix.'.minima', $existing?->individual_minima) }}">
+                            <input type="number" step="0.01" min="0" name="consultants[{{ $i }}][minima]" class="form-control form-control-sm text-right"
+                                   value="{{ old("consultants.{$i}.minima", $existing?->individual_minima) }}">
                         </td>
                         <td>
-                            <input type="number" step="0.01" min="0" name="{{ $prefix }}[target]" class="form-control form-control-sm text-right"
-                                   value="{{ old($prefix.'.target', $existing?->individual_target) }}">
+                            <input type="number" step="0.01" min="0" name="consultants[{{ $i }}][target]" class="form-control form-control-sm text-right"
+                                   value="{{ old("consultants.{$i}.target", $existing?->individual_target) }}">
                         </td>
                         <td>
-                            <input type="number" step="0.01" min="0" name="{{ $prefix }}[wow]" class="form-control form-control-sm text-right"
-                                   value="{{ old($prefix.'.wow', $existing?->individual_wow) }}">
+                            <input type="number" step="0.01" min="0" name="consultants[{{ $i }}][wow]" class="form-control form-control-sm text-right"
+                                   value="{{ old("consultants.{$i}.wow", $existing?->individual_wow) }}">
                         </td>
                     </tr>
                 @endforeach

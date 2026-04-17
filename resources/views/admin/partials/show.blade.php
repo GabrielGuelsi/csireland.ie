@@ -143,7 +143,7 @@
         <h3>Destaques:</h3>
         <ul>
             @foreach($bullets as $bullet)
-                <li>{!! e($bullet) !!}</li>
+                <li>{{ $bullet }}</li>
             @endforeach
         </ul>
     </div>

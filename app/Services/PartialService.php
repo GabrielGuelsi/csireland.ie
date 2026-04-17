@@ -101,6 +101,7 @@ class PartialService
     {
         $q = Student::query()
             ->whereIn('product_type', Student::PARTIAL_COUNTABLE_PRODUCTS)
+            ->where('source', '!=', 'import')
             ->whereBetween('form_submitted_at', [$from, $to]);
 
         if ($consultantId !== null) {

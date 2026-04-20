@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\Applications\ApplicationStudentController;
 use App\Http\Controllers\Admin\Applications\DispatchController;
 use App\Http\Controllers\Admin\Applications\ServiceRequestAttachmentController as AppAttachmentController;
 use App\Http\Controllers\Admin\Applications\ServiceRequestController as AppServiceRequestController;
+use App\Http\Controllers\Admin\Applications\SpecialApprovalController;
 use App\Http\Controllers\Admin\Applications\StudentChatController;
 use App\Http\Controllers\Admin\AssignmentRuleController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -119,6 +120,10 @@ Route::middleware(['auth', 'admin_or_application'])->prefix('admin')->name('admi
         Route::get('service-requests/attachments/{attachment}/view',     [AppAttachmentController::class, 'view'])->name('service-requests.attachments.view');
         Route::get('students/{student}',       [ApplicationStudentController::class, 'show'])->name('students.show');
         Route::match(['PUT','PATCH'], 'students/{student}', [ApplicationStudentController::class, 'update'])->name('students.update');
+
+        Route::get('special-approvals',             [SpecialApprovalController::class, 'index'])->name('special-approvals.index');
+        Route::get('special-approvals/{student}',   [SpecialApprovalController::class, 'show'])->name('special-approvals.show');
+        Route::patch('special-approvals/{student}', [SpecialApprovalController::class, 'update'])->name('special-approvals.update');
     });
 
     // Student chat (shared between CS admins and Applications team)

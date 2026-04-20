@@ -384,6 +384,13 @@ return [
             'icon'  => 'fas fa-fw fa-times-circle',
             'can'   => 'access-admin',
         ],
+        [
+            'key'   => 'apps_special_approvals',
+            'text'  => 'Special Approvals',
+            'route' => 'admin.applications.special-approvals.index',
+            'icon'  => 'fas fa-fw fa-star-half-alt',
+            'can'   => 'access-admin',
+        ],
 
         ['header' => 'TEAM', 'can' => 'access-admin'],
         [

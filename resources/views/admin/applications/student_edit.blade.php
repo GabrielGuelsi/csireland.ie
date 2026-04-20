@@ -18,6 +18,10 @@
     <div class="alert alert-success">{{ session('status') }}</div>
 @endif
 
+@if($student->hasAnySpecialApprovals())
+    @include('admin.students._special_conditions_card', ['student' => $student])
+@endif
+
 <div class="row">
     <div class="col-md-7">
         <div class="card">

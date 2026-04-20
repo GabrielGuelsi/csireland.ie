@@ -10,7 +10,16 @@
       "Bash(ls:*)",
       "Bash(grep -n \"password\\\\|token\\\\|secret\\\\|key\" /c/Users/PC_Desk/Desktop/eduauto-platform/app/Http/Controllers/Api/*.php)",
       "Bash(grep:*)",
-      "Bash(awk '{print $NF}')"
+      "Bash(awk '{print $NF}')",
+      "Bash(php -l app/Http/Controllers/Admin/Applications/SpecialApprovalController.php)",
+      "Bash(php -l app/Models/Student.php)",
+      "Bash(php -l app/Http/Controllers/Api/WebhookController.php)",
+      "Bash(php -l app/Http/Controllers/Api/StudentController.php)",
+      "Bash(php -l app/Listeners/DecorateApplicationsMenu.php)",
+      "Bash(php -r \"echo base64_encode\\(random_bytes\\(32\\)\\);\")",
+      "Bash(APP_KEY=\"base64:$\\(php -r \"echo base64_encode\\(random_bytes\\(32\\)\\);\"\\)\" php artisan test tests/Feature/SpecialApprovalTest.php tests/Feature/CancellationCompletionTest.php)",
+      "Bash(php -l tests/Feature/SpecialApprovalTest.php)",
+      "Bash(php -l resources/views/admin/applications/special_approvals/show.blade.php)"
     ]
   }
 }

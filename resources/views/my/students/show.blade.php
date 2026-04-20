@@ -38,6 +38,11 @@
             </div>
         </div>
 
+        {{-- Commercial Exceptions (read-only for CS) --}}
+        @if($student->hasAnySpecialApprovals())
+            @include('admin.students._special_conditions_card', ['student' => $student])
+        @endif
+
         {{-- Scheduled messages --}}
         @if($scheduledMessages->isNotEmpty())
         <div class="card">

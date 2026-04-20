@@ -396,6 +396,12 @@ class StudentController extends Controller
             'last_contacted_at'       => $student->last_contacted_at?->toIso8601String(),
             'sla_overdue'             => $sla['overdue'],
             'sla_days_remaining'      => $sla['days_remaining'],
+            'special_condition_options' => $student->special_condition_options,
+            'special_condition_other'   => $student->special_condition_other,
+            'special_condition_status'  => $student->special_condition_status,
+            'reduced_entry_amount'      => $student->reduced_entry_amount !== null ? (float) $student->reduced_entry_amount : null,
+            'reduced_entry_other'       => $student->reduced_entry_other,
+            'reduced_entry_status'      => $student->reduced_entry_status,
             'notes'                   => $student->relationLoaded('notes')
                 ? $student->notes->map(fn($n) => [
                     'id'         => $n->id,

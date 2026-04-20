@@ -40,6 +40,22 @@ class WebhookController extends Controller
             return $val === '' ? null : $val;
         };
 
+        // Helper: extract every value for a multi-select field, trimmed, non-empty
+        $getAll = function (string $key) use ($normalised): array {
+            $raw = $normalised[$key] ?? [];
+            if (!is_array($raw)) {
+                $raw = [$raw];
+            }
+            $out = [];
+            foreach ($raw as $v) {
+                $v = trim((string) $v);
+                if ($v !== '') {
+                    $out[] = $v;
+                }
+            }
+            return $out;
+        };
+
         // 2. Extract fields — using actual Google Form column names
         $studentEmail     = $get('Student email');
         $salesAdvisor     = $get('Sales Advisor');
@@ -61,6 +77,8 @@ class WebhookController extends Controller
                         ?? $get('Student phone number');
         $dobRaw           = $get('Date of Birth');
         $visaExpiryRaw    = $get('Visa expiry');
+        $reducedEntryRaw  = $get('Entrada Reduzida');
+        $specialCondRaw   = $getAll('Condição diferenciada');
 
         // 3. Map product_type
         $productType      = null;
@@ -138,6 +156,38 @@ class WebhookController extends Controller
             }
         }
 
+        // 7b. Parse "Condição diferenciada" (multi-select, free-text on "Outro:")
+        $specialOptions = [];
+        $specialOther   = null;
+        $condMap = [
+            'Seguro Governamental Gratuito'     => 'gov_insurance_free',
+            'Seguro Governamental 50% desconto' => 'gov_insurance_50',
+            'Duolingo'                          => 'duolingo',
+        ];
+        foreach ($specialCondRaw as $v) {
+            if (stripos($v, 'Outro') === 0) {
+                $specialOptions[] = 'other';
+                $specialOther = trim(substr($v, strlen('Outro:'))) ?: null;
+            } elseif (isset($condMap[$v])) {
+                $specialOptions[] = $condMap[$v];
+            }
+        }
+        $specialOptions = array_values(array_unique($specialOptions));
+
+        // 7c. Parse "Entrada Reduzida" (single choice: 0/150/250/350 or "Outro:")
+        $reducedAmount = null;
+        $reducedOther  = null;
+        if ($reducedEntryRaw !== null) {
+            if (stripos($reducedEntryRaw, 'Outro') === 0) {
+                $reducedOther = trim(substr($reducedEntryRaw, strlen('Outro:'))) ?: null;
+            } elseif (is_numeric($reducedEntryRaw)) {
+                $reducedAmount = (float) $reducedEntryRaw;
+            }
+        }
+
+        $hasSpecialCondition = !empty($specialOptions);
+        $hasReducedEntry     = $reducedAmount !== null || $reducedOther !== null;
+
         // 8. Resolve sales consultant → CS agent
         $assignment = (new AssignmentService())->resolve($salesAdvisor ?? 'Unknown');
 
@@ -166,6 +216,12 @@ class WebhookController extends Controller
             'application_status'      => 'new_dispatch',
             'source'                  => 'form',
             'form_submitted_at'       => now(),
+            'special_condition_options' => $hasSpecialCondition ? $specialOptions : null,
+            'special_condition_other'   => $specialOther,
+            'special_condition_status'  => $hasSpecialCondition ? 'pending' : null,
+            'reduced_entry_amount'      => $reducedAmount,
+            'reduced_entry_other'       => $reducedOther,
+            'reduced_entry_status'      => $hasReducedEntry ? 'pending' : null,
         ];
 
         // 11. Try to find an existing student (phone first, then name)

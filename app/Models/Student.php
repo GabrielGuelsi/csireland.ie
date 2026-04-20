@@ -26,6 +26,10 @@ class Student extends Model
         'cancellation_reason', 'cancellation_justified',
         'application_status', 'application_notes',
         'college_application_date', 'college_response_date', 'offer_letter_received_at',
+        'special_condition_options', 'special_condition_other', 'special_condition_status',
+        'special_condition_reviewed_by', 'special_condition_reviewed_at', 'special_condition_review_notes',
+        'reduced_entry_amount', 'reduced_entry_other', 'reduced_entry_status',
+        'reduced_entry_reviewed_by', 'reduced_entry_reviewed_at', 'reduced_entry_review_notes',
     ];
 
     protected $casts = [
@@ -42,6 +46,10 @@ class Student extends Model
         'offer_letter_received_at' => 'datetime',
         'sales_price'        => 'decimal:2',
         'sales_price_scholarship' => 'decimal:2',
+        'special_condition_options'     => 'array',
+        'special_condition_reviewed_at' => 'datetime',
+        'reduced_entry_amount'          => 'decimal:2',
+        'reduced_entry_reviewed_at'     => 'datetime',
     ];
 
     public function salesConsultant()
@@ -159,5 +167,39 @@ class Student extends Model
             null, ''          => '—',
             default           => ucfirst(str_replace('_', ' ', $status)),
         };
+    }
+
+    public static function specialConditionOptions(): array
+    {
+        return [
+            'gov_insurance_free' => 'Seguro Governamental Gratuito',
+            'gov_insurance_50'   => 'Seguro Governamental 50% desconto',
+            'duolingo'           => 'Duolingo',
+            'other'              => 'Outro',
+        ];
+    }
+
+    public static function specialConditionOptionLabel(string $code): string
+    {
+        return self::specialConditionOptions()[$code] ?? ucfirst(str_replace('_', ' ', $code));
+    }
+
+    public function specialConditionReviewer()
+    {
+        return $this->belongsTo(User::class, 'special_condition_reviewed_by');
+    }
+
+    public function reducedEntryReviewer()
+    {
+        return $this->belongsTo(User::class, 'reduced_entry_reviewed_by');
+    }
+
+    public function hasAnySpecialApprovals(): bool
+    {
+        return !empty($this->special_condition_options)
+            || $this->special_condition_status !== null
+            || $this->reduced_entry_amount !== null
+            || $this->reduced_entry_other !== null
+            || $this->reduced_entry_status !== null;
     }
 }

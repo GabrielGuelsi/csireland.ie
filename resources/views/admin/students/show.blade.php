@@ -147,6 +147,11 @@ $priorityBadge = ['high' => 'danger', 'medium' => 'warning', 'low' => 'secondary
             </div>
         </div>
 
+        {{-- Commercial Exceptions --}}
+        @if($student->hasAnySpecialApprovals())
+        @include('admin.students._special_conditions_card', ['student' => $student])
+        @endif
+
         {{-- Scheduled Messages --}}
         @if($scheduledMessages->isNotEmpty())
         <div class="card">

@@ -36,6 +36,12 @@ class DecorateApplicationsMenu
                 'apps_cancellations' => ServiceRequest::where('type', 'cancellation')
                     ->whereNotIn('status', ['completed'])
                     ->count(),
+                'apps_special_approvals' => Student::query()
+                    ->where(function ($q) {
+                        $q->where('special_condition_status', 'pending')
+                          ->orWhere('reduced_entry_status', 'pending');
+                    })
+                    ->count(),
             ];
 
             $builder = $event->menu;

@@ -142,7 +142,7 @@ class Student extends Model
             'applied',
             'waiting_college',
             'offer_received',
-            'rejected',
+            'cancelled',
         ];
     }
 
@@ -155,7 +155,7 @@ class Student extends Model
             'applied'         => 'Applied to College',
             'waiting_college' => 'Waiting College Response',
             'offer_received'  => 'Offer Received',
-            'rejected'        => 'Rejected',
+            'cancelled'       => 'Cancelled',
             null, ''          => '—',
             default           => ucfirst(str_replace('_', ' ', $status)),
         };

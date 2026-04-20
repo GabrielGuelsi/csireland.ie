@@ -351,6 +351,7 @@ return [
 
         ['header' => 'APPLICATIONS', 'can' => 'access-admin'],
         [
+            'key'   => 'apps_new_entries',
             'text'  => 'New Entries',
             'route' => 'admin.applications.dispatch.index',
             'icon'  => 'fas fa-fw fa-inbox',
@@ -363,18 +364,21 @@ return [
             'can'   => 'access-admin',
         ],
         [
+            'key'   => 'apps_doc_requests',
             'text'  => 'Doc Requests',
             'route' => 'admin.applications.service-requests.documentation',
             'icon'  => 'fas fa-fw fa-file-alt',
             'can'   => 'access-admin',
         ],
         [
+            'key'   => 'apps_refunds',
             'text'  => 'Refunds',
             'route' => 'admin.applications.service-requests.refunds',
             'icon'  => 'fas fa-fw fa-undo-alt',
             'can'   => 'access-admin',
         ],
         [
+            'key'   => 'apps_cancellations',
             'text'  => 'Cancellations',
             'route' => 'admin.applications.service-requests.cancellations',
             'icon'  => 'fas fa-fw fa-times-circle',

@@ -6,6 +6,7 @@
     <h1>{{ $student->name }}</h1>
     <p class="text-muted">
         {{ $student->product_type }} · {{ $student->university }} · {{ $student->course }}
+        · Sales Consultant: {{ optional($student->salesConsultant)->name ?? '—' }}
         · CS Agent: {{ optional($student->assignedAgent)->name ?? '—' }}
     </p>
 @stop

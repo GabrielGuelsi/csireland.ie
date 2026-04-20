@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin\Applications;
 use App\Http\Controllers\Controller;
 use App\Models\ServiceRequest;
 use App\Models\StudentChat;
+use App\Models\StudentStageLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ServiceRequestController extends Controller
 {
@@ -82,7 +84,28 @@ class ServiceRequestController extends Controller
             ]);
 
             if ($serviceRequest->type === 'cancellation') {
-                $serviceRequest->student->update(['application_status' => 'rejected']);
+                $student = $serviceRequest->student;
+                $data    = $serviceRequest->data ?? [];
+                $userId  = $request->user()->id;
+
+                DB::transaction(function () use ($student, $data, $userId) {
+                    if ($student->status !== 'cancelled') {
+                        StudentStageLog::create([
+                            'student_id' => $student->id,
+                            'from_stage' => $student->status,
+                            'to_stage'   => 'cancelled',
+                            'changed_by' => $userId,
+                            'changed_at' => now(),
+                        ]);
+                    }
+
+                    $student->update([
+                        'status'                 => 'cancelled',
+                        'cancellation_reason'    => $data['reason'] ?? $student->cancellation_reason,
+                        'cancellation_justified' => $data['cancellation_justified'] ?? $student->cancellation_justified,
+                        'application_status'     => 'cancelled',
+                    ]);
+                });
             }
         }
 

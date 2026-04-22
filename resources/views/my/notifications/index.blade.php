@@ -1,9 +1,9 @@
 @extends('adminlte::page')
 
-@section('title', 'My Notifications')
+@section('title', __('My Notifications'))
 
 @section('content_header')
-    <h1>Notifications</h1>
+    <h1>{{ __('Notifications') }}</h1>
 @stop
 
 @section('content')
@@ -13,7 +13,7 @@
 <div class="card">
     <div class="card-body p-0">
         <table class="table table-hover mb-0">
-            <thead><tr><th>When</th><th>Type</th><th>Student</th><th></th></tr></thead>
+            <thead><tr><th>{{ __('When') }}</th><th>{{ __('Type') }}</th><th>{{ __('Student') }}</th><th></th></tr></thead>
             <tbody>
                 @forelse($notifications as $n)
                 <tr>
@@ -29,12 +29,12 @@
                     <td>
                         <form method="POST" action="{{ route('my.notifications.read', $n) }}">
                             @csrf @method('PATCH')
-                            <button class="btn btn-sm btn-secondary">Mark read</button>
+                            <button class="btn btn-sm btn-secondary">{{ __('Mark read') }}</button>
                         </form>
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="4" class="text-center text-muted p-4">Nothing new. 🎉</td></tr>
+                <tr><td colspan="4" class="text-center text-muted p-4">{{ __('Nothing new.') }} 🎉</td></tr>
                 @endforelse
             </tbody>
         </table>

@@ -13,7 +13,7 @@ class User extends Authenticatable
     use HasFactory, Notifiable, HasApiTokens;
 
     protected $fillable = [
-        'name', 'email', 'password', 'role', 'whatsapp_phone', 'active',
+        'name', 'email', 'password', 'role', 'whatsapp_phone', 'active', 'locale',
     ];
 
     protected $hidden = ['password', 'remember_token'];

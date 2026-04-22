@@ -88,6 +88,6 @@ class ServiceRequestController extends Controller
             'body'        => ServiceRequest::buildSubmissionMessage($request->type, $request->input('data'), $request->user()->name),
         ]);
 
-        return back()->with('success', 'Request submitted successfully.');
+        return back()->with('success', __('Request submitted successfully.'));
     }
 }

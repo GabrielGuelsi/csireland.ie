@@ -304,6 +304,23 @@ return [
             'type'         => 'fullscreen-widget',
             'topnav_right' => true,
         ],
+        [
+            'text'         => 'Language',
+            'topnav_right' => true,
+            'icon'         => 'fas fa-fw fa-language',
+            'submenu'      => [
+                [
+                    'text' => 'English',
+                    'url'  => '#',
+                    'data' => ['lang' => 'en'],
+                ],
+                [
+                    'text' => 'Português',
+                    'url'  => '#',
+                    'data' => ['lang' => 'pt-br'],
+                ],
+            ],
+        ],
 
         // ---------- CS AGENT PORTAL (/my) ----------
         ['header' => 'MY WORK', 'can' => 'access-my'],
@@ -384,13 +401,6 @@ return [
             'icon'  => 'fas fa-fw fa-times-circle',
             'can'   => 'access-admin',
         ],
-        [
-            'key'   => 'apps_special_approvals',
-            'text'  => 'Special Approvals',
-            'route' => 'admin.applications.special-approvals.index',
-            'icon'  => 'fas fa-fw fa-star-half-alt',
-            'can'   => 'access-admin',
-        ],
 
         ['header' => 'TEAM', 'can' => 'access-admin'],
         [
@@ -443,6 +453,13 @@ return [
             'text'  => 'Influencers',
             'route' => 'admin.influencers.index',
             'icon'  => 'fas fa-fw fa-bullhorn',
+            'can'   => 'access-admin',
+        ],
+        [
+            'key'   => 'apps_special_approvals',
+            'text'  => 'Special Approvals',
+            'route' => 'admin.applications.special-approvals.index',
+            'icon'  => 'fas fa-fw fa-star-half-alt',
             'can'   => 'access-admin',
         ],
 
@@ -504,6 +521,16 @@ return [
                     'type'     => 'css',
                     'asset'    => true,
                     'location' => 'css/ci-theme.css',
+                ],
+            ],
+        ],
+        'LocaleSwitcher' => [
+            'active' => true,
+            'files' => [
+                [
+                    'type'     => 'js',
+                    'asset'    => true,
+                    'location' => 'js/locale-switcher.js',
                 ],
             ],
         ],

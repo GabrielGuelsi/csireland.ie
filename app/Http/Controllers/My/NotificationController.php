@@ -23,6 +23,6 @@ class NotificationController extends Controller
     {
         abort_if($notification->user_id !== $request->user()->id && !$request->user()->isAdmin(), 403);
         $notification->update(['read_at' => now()]);
-        return back()->with('success', 'Notification marked as read.');
+        return back()->with('success', __('Notification marked as read.'));
     }
 }

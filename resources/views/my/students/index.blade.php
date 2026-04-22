@@ -1,9 +1,9 @@
 @extends('adminlte::page')
 
-@section('title', 'My Students')
+@section('title', __('My Students'))
 
 @section('content_header')
-    <h1>My Students</h1>
+    <h1>{{ __('My Students') }}</h1>
 @stop
 
 @section('content')
@@ -16,11 +16,11 @@
 <form method="GET" action="{{ route('my.students.index') }}" class="card card-body mb-3">
     <div class="form-row">
         <div class="col-md-4">
-            <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="Search name or email…">
+            <input type="text" name="search" value="{{ request('search') }}" class="form-control" placeholder="{{ __('Search name or email…') }}">
         </div>
         <div class="col-md-3">
             <select name="status" class="form-control">
-                <option value="">All statuses</option>
+                <option value="">{{ __('All statuses') }}</option>
                 @foreach(Student::allStatuses() as $st)
                     <option value="{{ $st }}" @selected(request('status') === $st)>{{ Student::statusLabel($st) }}</option>
                 @endforeach
@@ -28,15 +28,15 @@
         </div>
         <div class="col-md-2">
             <select name="priority" class="form-control">
-                <option value="">All priorities</option>
-                <option value="high" @selected(request('priority') === 'high')>High</option>
-                <option value="medium" @selected(request('priority') === 'medium')>Medium</option>
-                <option value="low" @selected(request('priority') === 'low')>Low</option>
+                <option value="">{{ __('All priorities') }}</option>
+                <option value="high" @selected(request('priority') === 'high')>{{ __('High') }}</option>
+                <option value="medium" @selected(request('priority') === 'medium')>{{ __('Medium') }}</option>
+                <option value="low" @selected(request('priority') === 'low')>{{ __('Low') }}</option>
             </select>
         </div>
         <div class="col-md-3">
-            <button type="submit" class="btn btn-primary">Filter</button>
-            <a href="{{ route('my.students.index') }}" class="btn btn-secondary">Clear</a>
+            <button type="submit" class="btn btn-primary">{{ __('Filter') }}</button>
+            <a href="{{ route('my.students.index') }}" class="btn btn-secondary">{{ __('Clear') }}</a>
         </div>
     </div>
 </form>
@@ -46,12 +46,12 @@
         <table class="table table-hover mb-0">
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Status</th>
-                    <th>Priority</th>
-                    <th>Product</th>
-                    <th>University</th>
-                    <th>SLA</th>
+                    <th>{{ __('Name') }}</th>
+                    <th>{{ __('Status') }}</th>
+                    <th>{{ __('Priority') }}</th>
+                    <th>{{ __('Product') }}</th>
+                    <th>{{ __('University') }}</th>
+                    <th>{{ __('SLA') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -63,7 +63,7 @@
                     <td>
                         @if($s->priority)
                             <span class="badge badge-{{ $s->priority === 'high' ? 'danger' : ($s->priority === 'medium' ? 'warning' : 'secondary') }}">
-                                {{ ucfirst($s->priority) }}
+                                {{ __(ucfirst($s->priority)) }}
                             </span>
                         @endif
                     </td>
@@ -71,14 +71,14 @@
                     <td>{{ $s->university }}</td>
                     <td>
                         @if($slaRow['overdue'])
-                            <span class="badge badge-danger">Overdue</span>
+                            <span class="badge badge-danger">{{ __('Overdue') }}</span>
                         @elseif($slaRow['days_remaining'] !== null)
-                            <span class="text-muted">{{ $slaRow['days_remaining'] }}d left</span>
+                            <span class="text-muted">{{ __(':days d left', ['days' => $slaRow['days_remaining']]) }}</span>
                         @endif
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="6" class="text-center text-muted p-4">No students match these filters.</td></tr>
+                <tr><td colspan="6" class="text-center text-muted p-4">{{ __('No students match these filters.') }}</td></tr>
                 @endforelse
             </tbody>
         </table>

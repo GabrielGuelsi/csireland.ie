@@ -19,7 +19,9 @@
       "Bash(php -r \"echo base64_encode\\(random_bytes\\(32\\)\\);\")",
       "Bash(APP_KEY=\"base64:$\\(php -r \"echo base64_encode\\(random_bytes\\(32\\)\\);\"\\)\" php artisan test tests/Feature/SpecialApprovalTest.php tests/Feature/CancellationCompletionTest.php)",
       "Bash(php -l tests/Feature/SpecialApprovalTest.php)",
-      "Bash(php -l resources/views/admin/applications/special_approvals/show.blade.php)"
+      "Bash(php -l resources/views/admin/applications/special_approvals/show.blade.php)",
+      "Read(//Users/gabrielsales/Downloads/extension in use/**)",
+      "WebFetch(domain:ciireland.ie)"
     ]
   }
 }

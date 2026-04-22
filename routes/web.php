@@ -135,6 +135,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile',    [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile',  [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::post('/locale', [\App\Http\Controllers\LocaleController::class, 'update'])->name('locale.update');
 });
 
 // CS agent portal — own students only (admins allowed for preview)

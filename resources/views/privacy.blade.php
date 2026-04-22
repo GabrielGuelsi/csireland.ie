@@ -17,7 +17,7 @@
 <body>
 
   <h1>Privacy Policy</h1>
-  <p class="meta">CI Ireland CS Platform Chrome Extension &mdash; Last updated: April 2026</p>
+  <p class="meta">CI Ireland CS Platform Chrome Extension &mdash; Last updated: 22 April 2026</p>
 
   <h2>1. Overview</h2>
   <p>
@@ -28,11 +28,17 @@
   <p>This extension is not available to the general public and is intended solely for authorised CI Ireland staff.</p>
 
   <h2>2. Data Collection</h2>
-  <p>The extension collects and stores the following data on the user's device via Chrome's <code>chrome.storage.local</code> API:</p>
+  <p>The extension collects the following data in the course of normal operation:</p>
   <ul>
     <li>
+      <strong>Login credentials:</strong> The agent's email address and password are transmitted to the CI Ireland
+      backend (<code>cs.ciireland.ie</code>) over HTTPS when the agent logs in. Credentials are used solely to
+      authenticate the session and are not retained on the device after login.
+    </li>
+    <li>
       <strong>Authentication token:</strong> A session token issued by the CI Ireland backend
-      (<code>cs.ciireland.ie</code>) upon login, used to authenticate subsequent API requests.
+      (<code>cs.ciireland.ie</code>) upon login, used to authenticate subsequent API requests. Stored on the user's
+      device via Chrome's <code>chrome.storage.local</code> API.
     </li>
     <li>
       <strong>Agent identity:</strong> The agent's name and internal user ID, used to personalise the sidebar interface.
@@ -47,6 +53,19 @@
   <p>The extension does <strong>not</strong> read, collect, or transmit WhatsApp message content.</p>
   <p>The extension does <strong>not</strong> track browsing history or any activity outside of WhatsApp Web.</p>
   <p>The extension does <strong>not</strong> use cookies, analytics services, or advertising trackers.</p>
+
+  <h2>2a. Student Data Displayed by the Extension</h2>
+  <p>
+    In addition to the data listed in Section 2 above, the extension displays personal data about CI Ireland
+    students (name, email address, phone number, date of birth, course, intake, visa status, visa expiry date,
+    exam dates and results, payment status, and pricing information) that is retrieved from the CI Ireland
+    backend on demand.
+  </p>
+  <p>
+    This student data is received solely to enable authorised CI Ireland staff to manage the student's case.
+    It is displayed for the duration of the active browser session only, is not persisted by the extension
+    between sessions, and is not transmitted to any third party.
+  </p>
 
   <h2>3. Data Processing</h2>
   <p>
@@ -74,8 +93,9 @@
 
   <h2>4. Data Storage</h2>
   <p>
-    Data stored locally on the device is limited to the items listed in Section 2 (authentication token,
-    agent identity, language preference, and server URL). This data is stored using Chrome's
+    Data stored locally on the device is limited to the authentication token, agent identity, language
+    preference, and server URL (items listed in Section 2). Login credentials are not retained on the
+    device after login. This locally-stored data is held using Chrome's
     <code>chrome.storage.local</code> API and persists until:
   </p>
   <ul>

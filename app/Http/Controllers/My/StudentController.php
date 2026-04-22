@@ -99,7 +99,7 @@ class StudentController extends Controller
             $student->update($updates);
         }
 
-        return back()->with('success', 'Status updated.');
+        return back()->with('success', __('Status updated.'));
     }
 
     public function updatePriority(Request $request, Student $student)
@@ -109,7 +109,7 @@ class StudentController extends Controller
             'priority' => 'nullable|in:high,medium,low',
         ]);
         $student->update(['priority' => $data['priority'] ?? null]);
-        return back()->with('success', 'Priority updated.');
+        return back()->with('success', __('Priority updated.'));
     }
 
     public function updateExam(Request $request, Student $student)
@@ -120,7 +120,7 @@ class StudentController extends Controller
             'exam_result' => 'nullable|in:pending,pass,fail',
         ]);
         $student->update($data);
-        return back()->with('success', 'Exam updated.');
+        return back()->with('success', __('Exam updated.'));
     }
 
     public function updatePayment(Request $request, Student $student)
@@ -130,7 +130,7 @@ class StudentController extends Controller
             'payment_status' => 'nullable|in:pending,partial,confirmed',
         ]);
         $student->update($data);
-        return back()->with('success', 'Payment status updated.');
+        return back()->with('success', __('Payment status updated.'));
     }
 
     public function updateVisa(Request $request, Student $student)
@@ -140,14 +140,14 @@ class StudentController extends Controller
             'visa_status' => 'nullable|in:not_started,material_sent,answered,complete',
         ]);
         $student->update($data);
-        return back()->with('success', 'Visa status updated.');
+        return back()->with('success', __('Visa status updated.'));
     }
 
     public function markGiftReceived(Request $request, Student $student)
     {
         $this->authorizeOwnership($student);
         $student->update(['gift_received_at' => now()]);
-        return back()->with('success', 'Gift marked as received.');
+        return back()->with('success', __('Gift marked as received.'));
     }
 
     public function updateFollowup(Request $request, Student $student)
@@ -158,7 +158,7 @@ class StudentController extends Controller
             'next_followup_note' => 'nullable|string|max:500',
         ]);
         $student->update($data);
-        return back()->with('success', 'Follow-up updated.');
+        return back()->with('success', __('Follow-up updated.'));
     }
 
     public function addNote(Request $request, Student $student)
@@ -172,7 +172,7 @@ class StudentController extends Controller
             'author_id'  => $request->user()->id,
             'body'       => $data['body'],
         ]);
-        return back()->with('success', 'Note added.');
+        return back()->with('success', __('Note added.'));
     }
 
     public function markScheduledSent(Request $request, ScheduledStudentMessage $scheduledMessage)
@@ -192,6 +192,6 @@ class StudentController extends Controller
 
         $student->update(['last_contacted_at' => now()]);
 
-        return back()->with('success', 'Scheduled message marked as sent.');
+        return back()->with('success', __('Scheduled message marked as sent.'));
     }
 }

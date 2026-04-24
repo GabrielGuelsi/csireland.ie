@@ -30,6 +30,8 @@ class Student extends Model
         'special_condition_reviewed_by', 'special_condition_reviewed_at', 'special_condition_review_notes',
         'reduced_entry_amount', 'reduced_entry_other', 'reduced_entry_status',
         'reduced_entry_reviewed_by', 'reduced_entry_reviewed_at', 'reduced_entry_review_notes',
+        'original_product_type', 'original_course', 'original_university', 'original_intake', 'original_sales_price',
+        'reapplication_count', 'last_reapplied_at',
     ];
 
     protected $casts = [
@@ -50,7 +52,20 @@ class Student extends Model
         'special_condition_reviewed_at' => 'datetime',
         'reduced_entry_amount'          => 'decimal:2',
         'reduced_entry_reviewed_at'     => 'datetime',
+        'original_sales_price'          => 'decimal:2',
+        'reapplication_count'           => 'int',
+        'last_reapplied_at'             => 'datetime',
     ];
+
+    public function hasReapplied(): bool
+    {
+        return (int) $this->reapplication_count > 0;
+    }
+
+    public function scopeReapplied($q)
+    {
+        return $q->where('reapplication_count', '>', 0);
+    }
 
     public function salesConsultant()
     {
@@ -85,6 +100,11 @@ class Student extends Model
     public function scheduledMessages()
     {
         return $this->hasMany(ScheduledStudentMessage::class);
+    }
+
+    public function insurancePolicies()
+    {
+        return $this->hasMany(InsurancePolicy::class);
     }
 
     public function chats()

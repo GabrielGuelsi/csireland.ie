@@ -21,7 +21,7 @@ class ServiceRequestController extends Controller
         $this->authorizeOwnership($student);
 
         $request->validate([
-            'type' => 'required|in:documentation,refund,cancellation',
+            'type' => 'required|in:documentation,refund,cancellation,removal',
         ]);
 
         $dataRules = match ($request->type) {
@@ -41,6 +41,11 @@ class ServiceRequestController extends Controller
                 'data.sales_consultant'       => 'required|string|max:255',
                 'data.university'             => 'required|string|max:255',
                 'data.reason'                 => 'required|string|max:2000',
+            ],
+            'removal' => [
+                'data.reason_code'         => 'required|in:duplicate,concluded_previously,cancelled_previously,other',
+                'data.original_student_id' => 'required_if:data.reason_code,duplicate|nullable|integer|exists:students,id',
+                'data.reason_note'         => 'required_if:data.reason_code,other|nullable|string|max:2000',
             ],
         };
 

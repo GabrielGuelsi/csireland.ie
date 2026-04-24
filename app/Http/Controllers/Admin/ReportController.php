@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
+use App\Models\InsurancePolicy;
 use App\Models\MessageLog;
 use App\Models\Note;
 use App\Models\Student;
@@ -103,7 +104,7 @@ class ReportController extends Controller
 
         $slaBreachCount = Student::whereNotIn('status', ['cancelled', 'concluded'])
             ->get()
-            ->filter(fn($s) => $sla->getStatus($s)['overdue'])
+            ->filter(fn($s) => $sla->getStatus($s)['overdue_strict'])
             ->count();
 
         $overdueFollowupCount = Student::whereNotNull('next_followup_date')
@@ -198,7 +199,7 @@ class ReportController extends Controller
             $slaBreachCount = Student::where('assigned_cs_agent_id', $agent->id)
                 ->whereNotIn('status', ['cancelled', 'concluded'])
                 ->get()
-                ->filter(fn($s) => $sla->getStatus($s)['overdue'])
+                ->filter(fn($s) => $sla->getStatus($s)['overdue_strict'])
                 ->count();
 
             // Overdue follow-ups (real-time)
@@ -294,7 +295,7 @@ class ReportController extends Controller
         return Student::whereNotIn('status', ['cancelled', 'concluded'])
             ->with('assignedAgent')
             ->get()
-            ->filter(fn($s) => $sla->getStatus($s)['overdue'])
+            ->filter(fn($s) => $sla->getStatus($s)['overdue_strict'])
             ->map(function ($s) use ($sla) {
                 $status = $sla->getStatus($s);
                 $stageEnteredAt = $this->stageEnteredAt($s);
@@ -500,5 +501,45 @@ class ReportController extends Controller
             return Carbon::parse($student->form_submitted_at);
         }
         return null;
+    }
+
+    public function insurance(Request $request)
+    {
+        $year  = (int) $request->input('year',  now()->year);
+        $month = (int) $request->input('month', now()->month);
+
+        $scope = InsurancePolicy::inMonth($year, $month);
+
+        $countsByType = (clone $scope)->selectRaw('type, COUNT(*) as c')
+            ->groupBy('type')->pluck('c', 'type')->toArray();
+
+        $countsByStatus = (clone $scope)->selectRaw('status, COUNT(*) as c')
+            ->groupBy('status')->pluck('c', 'status')->toArray();
+
+        $revenueCents     = (int) (clone $scope)->paid()->sum('price_cents');
+        $bonificadoCostCents = (int) (clone $scope)->bonificado()->sum('cost_cents');
+        $profitCents      = $revenueCents - $bonificadoCostCents;
+
+        $unmatched = (clone $scope)->unmatched()->count();
+
+        $policies = (clone $scope)
+            ->with(['student:id,name,email', 'approver:id,name'])
+            ->orderByDesc('created_at')
+            ->paginate(50)
+            ->withQueryString();
+
+        return view('admin.reports.insurance', [
+            'year'            => $year,
+            'month'           => $month,
+            'countsByType'    => $countsByType,
+            'countsByStatus'  => $countsByStatus,
+            'revenueCents'    => $revenueCents,
+            'bonificadoCostCents' => $bonificadoCostCents,
+            'profitCents'     => $profitCents,
+            'unmatched'       => $unmatched,
+            'policies'        => $policies,
+            'statusLabels'    => InsurancePolicy::statusLabels('pt_BR'),
+            'typeLabels'      => InsurancePolicy::typeLabels('pt_BR'),
+        ]);
     }
 }

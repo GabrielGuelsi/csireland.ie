@@ -24,18 +24,20 @@ class ServiceRequest extends Model
 
     // ── Types & statuses ─────────────────────────────────────────────────────
 
-    public const TYPES = ['documentation', 'refund', 'cancellation'];
+    public const TYPES = ['documentation', 'refund', 'cancellation', 'removal'];
 
     public const STATUSES = [
         'documentation' => ['pending', 'scheduled', 'completed'],
         'refund'        => ['pending', 'in_review', 'approved', 'completed', 'rejected'],
         'cancellation'  => ['pending', 'in_review', 'completed'],
+        'removal'       => ['pending', 'in_review', 'completed', 'rejected'],
     ];
 
     public const TYPE_LABELS = [
         'documentation' => 'Document Request',
         'refund'        => 'Refund',
         'cancellation'  => 'Cancellation',
+        'removal'       => 'Removal Request',
     ];
 
     public const STATUS_LABELS = [
@@ -62,6 +64,7 @@ class ServiceRequest extends Model
             'documentation' => "[{$label}] submitted by {$agentName}. University: {$data['university']}. Emergency fee: " . (($data['emergency_fee_paid'] ?? false) ? 'Yes' : 'No') . ".",
             'refund'        => "[{$label}] submitted by {$agentName}. Reason: {$data['reason']}. Amount: €" . number_format($data['refund_amount'] ?? 0, 2) . ".",
             'cancellation'  => "[{$label}] submitted by {$agentName}. Reason: {$data['reason']}.",
+            'removal'       => "[{$label}] submitted by {$agentName}. Reason: " . ($data['reason_code'] ?? 'unknown') . ".",
             default         => "[{$label}] submitted by {$agentName}.",
         };
     }

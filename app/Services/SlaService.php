@@ -10,17 +10,15 @@ use Carbon\Carbon;
 class SlaService
 {
     /**
-     * Returns ['overdue' => bool, 'days_remaining' => int|null] for the student.
-     * A student is overdue if EITHER the status SLA OR the priority SLA is breached.
+     * Returns ['overdue' => bool, 'overdue_strict' => bool, 'days_remaining' => int|null].
+     * - overdue        : lenient (days <= 0) — agent UI ("due today" shown as overdue)
+     * - overdue_strict : strict  (days <  0) — reports / KPI counts
      */
     public function getStatus(Student $student): array
     {
         $statusResult   = $this->checkStatusSla($student);
         $priorityResult = $this->checkPrioritySla($student);
 
-        $overdue = $statusResult['overdue'] || $priorityResult['overdue'];
-
-        // Return the most urgent (lowest) days_remaining
         $remaining = null;
         if ($statusResult['days_remaining'] !== null) {
             $remaining = $statusResult['days_remaining'];
@@ -31,7 +29,11 @@ class SlaService
                 : min($remaining, $priorityResult['days_remaining']);
         }
 
-        return ['overdue' => $overdue, 'days_remaining' => $remaining];
+        return [
+            'overdue'        => $remaining !== null && $remaining <= 0,
+            'overdue_strict' => $remaining !== null && $remaining < 0,
+            'days_remaining' => $remaining,
+        ];
     }
 
     private function checkStatusSla(Student $student): array
@@ -63,6 +65,15 @@ class SlaService
     private function checkPrioritySla(Student $student): array
     {
         if (!$student->priority) {
+            return ['overdue' => false, 'days_remaining' => null];
+        }
+
+        // If the agent has scheduled a follow-up for today or later, suspend the
+        // priority-SLA timer — there's an explicit agreement with the student.
+        // Using >= today() (not isFuture()) so today's follow-up also suppresses,
+        // since a date-cast column anchors at 00:00 and isFuture() would miss today.
+        if ($student->next_followup_date
+            && $student->next_followup_date->greaterThanOrEqualTo(Carbon::today())) {
             return ['overdue' => false, 'days_remaining' => null];
         }
 

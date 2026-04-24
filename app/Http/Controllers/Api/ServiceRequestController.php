@@ -18,7 +18,7 @@ class ServiceRequestController extends Controller
     {
         $request->validate([
             'student_id' => 'required|exists:students,id',
-            'type'       => 'required|in:documentation,refund,cancellation',
+            'type'       => 'required|in:documentation,refund,cancellation,removal',
         ]);
 
         $student = Student::findOrFail($request->student_id);
@@ -46,6 +46,12 @@ class ServiceRequestController extends Controller
                 'data.sales_consultant'        => 'required|string|max:255',
                 'data.university'              => 'required|string|max:255',
                 'data.reason'                  => 'required|string|max:2000',
+                'data.cancellation_justified'  => 'required|boolean',
+            ],
+            'removal' => [
+                'data.reason_code'         => 'required|in:duplicate,concluded_previously,cancelled_previously,other',
+                'data.original_student_id' => 'required_if:data.reason_code,duplicate|nullable|integer|exists:students,id',
+                'data.reason_note'         => 'required_if:data.reason_code,other|nullable|string|max:2000',
             ],
         };
 
@@ -94,6 +100,10 @@ class ServiceRequestController extends Controller
             'author_role' => $request->user()->role ?? 'cs_agent',
             'body'        => ServiceRequest::buildSubmissionMessage($request->type, $request->input('data'), $request->user()->name),
         ]);
+
+        // Cancellation requests are REVIEWED by admin at /admin/applications/cancellations.
+        // The student's status is NOT flipped here — the admin's "completed" action
+        // does that via Admin/Applications/ServiceRequestController::update.
 
         return response()->json([
             'ok' => true,

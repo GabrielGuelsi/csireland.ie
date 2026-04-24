@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Applications;
 
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
+use App\Models\InsurancePolicy;
 use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -97,10 +98,47 @@ class SpecialApprovalController extends Controller
                 'new_value'  => $decision,
                 'created_at' => now(),
             ]);
+
+            // When special_condition is approved and the student opted into a government
+            // insurance option, auto-create the corresponding InsurancePolicy (idempotent).
+            if ($field === 'special_condition' && $decision === 'approved') {
+                $this->createBonificadoPolicies($student, $userId, $data['notes'] ?? null);
+            }
         });
 
         return redirect()
             ->route('admin.applications.special-approvals.show', $student)
             ->with('success', ucfirst(str_replace('_', ' ', $field)) . ' ' . $decision . '.');
+    }
+
+    /**
+     * For each gov_insurance_* option the student selected, create one InsurancePolicy
+     * row (bonificado) unless it already exists for this student+type.
+     */
+    private function createBonificadoPolicies(Student $student, int $approverId, ?string $notes): void
+    {
+        $map = [
+            'gov_insurance_free' => 'gov_free',
+            'gov_insurance_50'   => 'gov_50',
+        ];
+        $opts = $student->special_condition_options ?? [];
+        $defaultPrice = (int) config('insurance.default_price_cents');
+
+        foreach ($map as $optionCode => $policyType) {
+            if (!in_array($optionCode, $opts, true)) continue;
+            if ($student->insurancePolicies()->where('type', $policyType)->exists()) continue;
+
+            InsurancePolicy::create([
+                'student_id'     => $student->id,
+                'type'           => $policyType,
+                'source'         => 'admin',
+                'status'         => 'pending',
+                'price_cents'    => $policyType === 'gov_free' ? 0 : (int) round($defaultPrice / 2),
+                'cost_cents'     => (int) config('insurance.default_cost_cents'),
+                'approved_by'    => $approverId,
+                'approved_at'    => now(),
+                'approval_notes' => $notes,
+            ]);
+        }
     }
 }

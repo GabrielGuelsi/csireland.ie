@@ -87,3 +87,18 @@
 
 <div class="mt-3">{{ $students->links() }}</div>
 @stop
+
+@push('js')
+<script>
+(function () {
+    const form  = document.querySelector('form[action="{{ route('my.students.index') }}"]');
+    const input = form?.querySelector('input[name="search"]');
+    if (!input) return;
+    let t;
+    input.addEventListener('input', () => {
+        clearTimeout(t);
+        t = setTimeout(() => form.submit(), 600);
+    });
+})();
+</script>
+@endpush

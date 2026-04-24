@@ -81,12 +81,14 @@ class SendDailyAlertsJob implements ShouldQueue
             }
 
             // First contact overdue (3 working days since form submission, no first contact)
-            // Add-on product types are excluded — they don't follow the CS journey
+            // Add-on product types and reapplied students are excluded — they don't follow
+            // the fresh first-contact flow (reapplied students already have a relationship).
             $addOnTypes = ['insurance', 'emergencial_tax', 'learn_protection'];
             $overdueStudents = Student::where('assigned_cs_agent_id', $agent->id)
                 ->whereNull('first_contacted_at')
                 ->whereNotIn('status', ['cancelled'])
                 ->whereNotIn('product_type', $addOnTypes)
+                ->where('reapplication_count', 0)
                 ->get();
 
             foreach ($overdueStudents as $student) {

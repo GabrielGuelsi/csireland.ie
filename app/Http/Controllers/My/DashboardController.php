@@ -43,6 +43,7 @@ class DashboardController extends Controller
             ->whereNotNull('next_followup_date')
             ->whereDate('next_followup_date', '<=', $today)
             ->whereNotIn('status', ['cancelled', 'concluded'])
+            ->orderBy('next_followup_date')
             ->get();
 
         // Pending scheduled messages for own students

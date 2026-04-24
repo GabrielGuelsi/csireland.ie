@@ -114,5 +114,22 @@
     "Note added.": "Observação adicionada.",
     "Scheduled message marked as sent.": "Mensagem agendada marcada como enviada.",
     "Notification marked as read.": "Notificação marcada como lida.",
-    "Request submitted successfully.": "Solicitação enviada com sucesso."
+    "Request submitted successfully.": "Solicitação enviada com sucesso.",
+    "Note updated.": "Observação atualizada.",
+
+    "Edit": "Editar",
+    "Save": "Salvar",
+    "Cancel": "Cancelar",
+    "edited": "editado",
+
+    "Remove from Wallet": "Remover da carteira",
+    "Duplicate student": "Aluno duplicado",
+    "Already concluded previously": "Já concluído anteriormente",
+    "Already cancelled previously": "Já cancelado anteriormente",
+    "Other": "Outro",
+    "Original student (search)": "Aluno original (buscar)",
+    "Explain the reason": "Explique o motivo",
+    "No prior concluded/cancelled record found for this email — verify before submitting.": "Nenhum registro anterior (concluído/cancelado) encontrado para este e-mail — verifique antes de enviar.",
+    "Found prior record(s) for this email:": "Encontrados registros anteriores com este e-mail:",
+    "Removal requested — waiting for admin approval.": "Remoção solicitada — aguardando aprovação do admin."
 }

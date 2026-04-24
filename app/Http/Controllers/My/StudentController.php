@@ -35,7 +35,17 @@ class StudentController extends Controller
             $query->where('priority', $request->priority);
         }
 
-        $students = $query->latest()->paginate(20)->withQueryString();
+        $students = $query
+            ->orderByRaw('CASE WHEN next_followup_date IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('next_followup_date')
+            ->orderByRaw("CASE priority
+                WHEN 'high'   THEN 1
+                WHEN 'medium' THEN 2
+                WHEN 'low'    THEN 3
+                ELSE 4 END")
+            ->orderByDesc('updated_at')
+            ->paginate(20)
+            ->withQueryString();
 
         return view('my.students.index', compact('students', 'sla'));
     }
@@ -57,7 +67,14 @@ class StudentController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        return view('my.students.show', compact('student', 'sla', 'scheduledMessages', 'serviceRequests'));
+        $pendingRemoval = ServiceRequest::where('student_id', $student->id)
+            ->where('type', 'removal')
+            ->where('status', 'pending')
+            ->exists();
+
+        return view('my.students.show', compact(
+            'student', 'sla', 'scheduledMessages', 'serviceRequests', 'pendingRemoval'
+        ));
     }
 
     public function updateStage(Request $request, Student $student)
@@ -157,6 +174,17 @@ class StudentController extends Controller
             'next_followup_date' => 'nullable|date',
             'next_followup_note' => 'nullable|string|max:500',
         ]);
+
+        // Only bump last_contacted_at when the follow-up actually changed —
+        // prevents a no-op save from silently resetting the priority-SLA timer.
+        $oldDate = $student->next_followup_date?->format('Y-m-d');
+        $newDate = $data['next_followup_date'] ?? null;
+        $oldNote = $student->next_followup_note;
+        $newNote = $data['next_followup_note'] ?? null;
+        if ($oldDate !== $newDate || $oldNote !== $newNote) {
+            $data['last_contacted_at'] = now();
+        }
+
         $student->update($data);
         return back()->with('success', __('Follow-up updated.'));
     }
@@ -173,6 +201,19 @@ class StudentController extends Controller
             'body'       => $data['body'],
         ]);
         return back()->with('success', __('Note added.'));
+    }
+
+    public function updateNote(Request $request, Student $student, Note $note)
+    {
+        $this->authorizeOwnership($student);
+        abort_unless($note->student_id === $student->id, 404);
+        abort_unless(
+            $note->author_id === $request->user()->id || $request->user()->isAdmin(),
+            403
+        );
+        $data = $request->validate(['body' => 'required|string|max:5000']);
+        $note->update(['body' => $data['body']]);
+        return back()->with('success', __('Note updated.'));
     }
 
     public function markScheduledSent(Request $request, ScheduledStudentMessage $scheduledMessage)

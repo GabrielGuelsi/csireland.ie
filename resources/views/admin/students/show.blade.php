@@ -51,7 +51,25 @@ $priorityBadge = ['high' => 'danger', 'medium' => 'warning', 'low' => 'secondary
                         <span class="badge badge-warning">🎂 Birthday today!</span>
                         @endif
                     </dd>
-                    <dt class="col-sm-4">Product</dt><dd class="col-sm-8">{{ str_replace('_',' ', ucfirst($student->product_type)) }}{{ $student->product_type_other ? ' — '.$student->product_type_other : '' }}</dd>
+                    @if($student->original_course)
+                    <dt class="col-sm-4 text-muted">Aplicação Original</dt>
+                    <dd class="col-sm-8 text-muted">
+                        <small>
+                            {{ str_replace('_',' ', ucfirst($student->original_product_type ?? '')) }} &middot;
+                            {{ $student->original_course }} &middot;
+                            {{ $student->original_university ?? '—' }} &middot;
+                            {{ $student->original_intake ? ucfirst($student->original_intake) : '—' }}
+                            @if($student->original_sales_price) &middot; €{{ number_format($student->original_sales_price, 2) }} @endif
+                        </small>
+                    </dd>
+                    @endif
+                    <dt class="col-sm-4">Product</dt>
+                    <dd class="col-sm-8">
+                        {{ str_replace('_',' ', ucfirst($student->product_type)) }}{{ $student->product_type_other ? ' — '.$student->product_type_other : '' }}
+                        @if($student->reapplication_count > 0)
+                        <span class="badge badge-info">Reaplicação #{{ $student->reapplication_count }}</span>
+                        @endif
+                    </dd>
                     <dt class="col-sm-4">Course</dt><dd class="col-sm-8">{{ $student->course ?? '—' }}</dd>
                     <dt class="col-sm-4">University</dt><dd class="col-sm-8">{{ $student->university ?? '—' }}</dd>
                     <dt class="col-sm-4">Intake</dt><dd class="col-sm-8">{{ $student->intake ? ucfirst($student->intake) : '—' }}</dd>

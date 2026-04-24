@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\InsurancePolicyController;
 use App\Http\Controllers\Api\MessageLogController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\NoteController;
@@ -29,6 +30,7 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::get('students/match',        [StudentController::class, 'match']);
     Route::get('students/search',       [StudentController::class, 'search']);
     Route::get('students/pipeline',     [StudentController::class, 'pipeline']);
+    Route::get('students/{student}/past-cycles', [StudentController::class, 'pastCycles']);
     Route::post('students/{student}/link-phone', [StudentController::class, 'linkPhone']);
     Route::post('students/{student}/link-email', [StudentController::class, 'linkEmail']);
     Route::patch('students/{student}/stage',         [StudentController::class, 'updateStage']);
@@ -46,6 +48,10 @@ Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     // Notes
     Route::post('notes',              [NoteController::class, 'store']);
     Route::get('notes/{student_id}',  [NoteController::class, 'index']);
+    Route::patch('notes/{note}',      [NoteController::class, 'update']);
+
+    // Insurance policies (read-only for agents; admin UI is on the web side)
+    Route::get('students/{student}/insurance-policies', [InsurancePolicyController::class, 'byStudent']);
 
     // Templates
     Route::get('templates', [TemplateController::class, 'index']);

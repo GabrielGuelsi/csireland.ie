@@ -26,7 +26,9 @@ class NoteController extends Controller
             'id'         => $n->id,
             'body'       => $n->body,
             'author'     => $n->author?->name ?? 'System',
+            'author_id'  => $n->author_id,
             'created_at' => $n->created_at->toIso8601String(),
+            'updated_at' => $n->updated_at->toIso8601String(),
         ]));
     }
 
@@ -53,7 +55,38 @@ class NoteController extends Controller
             'id'         => $note->id,
             'body'       => $note->body,
             'author'     => $request->user()->name,
+            'author_id'  => $note->author_id,
             'created_at' => $note->created_at->toIso8601String(),
+            'updated_at' => $note->updated_at->toIso8601String(),
         ], 201);
+    }
+
+    // PATCH /api/notes/{note}
+    public function update(Request $request, Note $note)
+    {
+        $user    = $request->user();
+        $student = $note->student;
+
+        // Must still have access to the student — matches the auth boundary on index/store.
+        if (!$user->isAdmin() && $student->assigned_cs_agent_id !== $user->id) {
+            abort(403);
+        }
+        abort_unless(
+            $note->author_id === $user->id || $user->isAdmin(),
+            403
+        );
+
+        $request->validate(['body' => 'required|string|max:5000']);
+        $note->update(['body' => $request->body]);
+        $note->load('author');
+
+        return response()->json([
+            'id'         => $note->id,
+            'body'       => $note->body,
+            'author'     => $note->author?->name ?? 'System',
+            'author_id'  => $note->author_id,
+            'created_at' => $note->created_at->toIso8601String(),
+            'updated_at' => $note->updated_at->toIso8601String(),
+        ]);
     }
 }

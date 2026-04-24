@@ -12,6 +12,12 @@
 @if(session('success'))<div class="alert alert-success">{{ session('success') }}</div>@endif
 @if($errors->any())<div class="alert alert-danger"><ul class="mb-0">@foreach($errors->all() as $e)<li>{{ $e }}</li>@endforeach</ul></div>@endif
 
+@if($pendingRemoval ?? false)
+    <div class="alert alert-warning">
+        ⚠ {{ __('Removal requested — waiting for admin approval.') }}
+    </div>
+@endif
+
 <div class="row">
 
     <div class="col-md-8">
@@ -23,7 +29,24 @@
                     <dt class="col-sm-4">{{ __('Email') }}</dt><dd class="col-sm-8">{{ $student->email ?: '—' }}</dd>
                     <dt class="col-sm-4">{{ __('WhatsApp') }}</dt><dd class="col-sm-8">{{ $student->whatsapp_phone ?: '—' }}</dd>
                     <dt class="col-sm-4">{{ __('DOB') }}</dt><dd class="col-sm-8">{{ optional($student->date_of_birth)->format('d M Y') ?: '—' }}</dd>
-                    <dt class="col-sm-4">{{ __('Product') }}</dt><dd class="col-sm-8">{{ $student->product_type }}</dd>
+                    @if($student->original_course)
+                    <dt class="col-sm-4 text-muted">{{ __('Original Application') }}</dt>
+                    <dd class="col-sm-8 text-muted">
+                        <small>
+                            {{ $student->original_product_type }} &middot;
+                            {{ $student->original_course }} &middot;
+                            {{ $student->original_university ?: '—' }} &middot;
+                            {{ $student->original_intake ?: '—' }}
+                        </small>
+                    </dd>
+                    @endif
+                    <dt class="col-sm-4">{{ __('Product') }}</dt>
+                    <dd class="col-sm-8">
+                        {{ $student->product_type }}
+                        @if($student->reapplication_count > 0)
+                        <span class="badge badge-info">{{ __('Reapplication') }} #{{ $student->reapplication_count }}</span>
+                        @endif
+                    </dd>
                     <dt class="col-sm-4">{{ __('Course') }}</dt><dd class="col-sm-8">{{ $student->course ?: '—' }}</dd>
                     <dt class="col-sm-4">{{ __('University') }}</dt><dd class="col-sm-8">{{ $student->university ?: '—' }}</dd>
                     <dt class="col-sm-4">{{ __('Intake') }}</dt><dd class="col-sm-8">{{ $student->intake ?: '—' }}</dd>
@@ -84,6 +107,7 @@
                             <option value="documentation">{{ __('Document Request') }}</option>
                             <option value="refund">{{ __('Refund') }}</option>
                             <option value="cancellation">{{ __('Cancellation') }}</option>
+                            <option value="removal">{{ __('Remove from Wallet') }}</option>
                         </select>
                     </div>
 
@@ -151,6 +175,38 @@
                         </div>
                     </div>
 
+                    {{-- Removal fields --}}
+                    <div id="sr-fields-removal" class="sr-fields d-none">
+                        <div class="form-group">
+                            <label>{{ __('Reason') }} <span class="text-danger">*</span></label>
+                            <select name="data[reason_code]" id="sr-rem-reason" class="form-control">
+                                <option value="">{{ __('Select…') }}</option>
+                                <option value="duplicate">{{ __('Duplicate student') }}</option>
+                                <option value="concluded_previously">{{ __('Already concluded previously') }}</option>
+                                <option value="cancelled_previously">{{ __('Already cancelled previously') }}</option>
+                                <option value="other">{{ __('Other') }}</option>
+                            </select>
+                        </div>
+
+                        {{-- Duplicate: pick original student --}}
+                        <div class="form-group d-none" id="sr-rem-duplicate-block">
+                            <label>{{ __('Original student (search)') }} <span class="text-danger">*</span></label>
+                            <input type="text" id="sr-rem-orig-search" class="form-control mb-1" placeholder="{{ __('Search name or email…') }}" autocomplete="off">
+                            <div id="sr-rem-orig-results" class="list-group" style="max-height:200px;overflow:auto;"></div>
+                            <input type="hidden" name="data[original_student_id]" id="sr-rem-orig-id">
+                            <small class="text-muted" id="sr-rem-orig-selected"></small>
+                        </div>
+
+                        {{-- Other: free-text reason --}}
+                        <div class="form-group d-none" id="sr-rem-other-block">
+                            <label>{{ __('Explain the reason') }} <span class="text-danger">*</span></label>
+                            <textarea name="data[reason_note]" class="form-control" rows="3" placeholder="{{ __('Explain the reason') }}"></textarea>
+                        </div>
+
+                        {{-- Past cycles evidence (populated via XHR) --}}
+                        <div id="sr-rem-past-cycles" class="mt-2"></div>
+                    </div>
+
                     <button type="submit" class="btn btn-primary btn-block" id="sr-submit" disabled>{{ __('Submit Request') }}</button>
                 </form>
             </div>
@@ -193,9 +249,33 @@
                     <button class="btn btn-sm btn-primary">{{ __('Add note') }}</button>
                 </form>
                 @foreach($student->notes as $note)
-                    <div class="mb-2 p-2 border rounded">
-                        <small class="text-muted">{{ $note->author?->name ?? __('System') }} — {{ $note->created_at->diffForHumans() }}</small>
-                        <p class="mb-0">{{ $note->body }}</p>
+                    @php($canEdit = auth()->id() === $note->author_id || auth()->user()->isAdmin())
+                    <div class="mb-2 p-2 border rounded" data-note-id="{{ $note->id }}">
+                        <div class="note-display">
+                            <small class="text-muted">
+                                {{ $note->author?->name ?? __('System') }} — {{ $note->created_at->diffForHumans() }}
+                                @if($note->updated_at->gt($note->created_at))
+                                    <em>({{ __('edited') }})</em>
+                                @endif
+                            </small>
+                            @if($canEdit)
+                                <button type="button" class="btn btn-sm btn-link float-right py-0"
+                                        onclick="toggleNoteEdit({{ $note->id }})">{{ __('Edit') }}</button>
+                            @endif
+                            <p class="mb-0">{{ $note->body }}</p>
+                        </div>
+                        @if($canEdit)
+                        <form class="note-edit d-none" method="POST"
+                              action="{{ route('my.students.notes.update', [$student, $note]) }}">
+                            @csrf @method('PATCH')
+                            <div class="form-group mb-2">
+                                <textarea name="body" rows="2" class="form-control" required>{{ $note->body }}</textarea>
+                            </div>
+                            <button class="btn btn-sm btn-primary">{{ __('Save') }}</button>
+                            <button type="button" class="btn btn-sm btn-secondary"
+                                    onclick="toggleNoteEdit({{ $note->id }})">{{ __('Cancel') }}</button>
+                        </form>
+                        @endif
                     </div>
                 @endforeach
                 @if($student->notes->isEmpty())<p class="text-muted">{{ __('No notes yet.') }}</p>@endif
@@ -366,5 +446,91 @@ function toggleCancelFields() {
 }
 statusSelect.addEventListener('change', toggleCancelFields);
 toggleCancelFields(); // handle page load if already cancelled
+
+// Note edit toggle
+function toggleNoteEdit(id) {
+    const row = document.querySelector(`[data-note-id="${id}"]`);
+    if (!row) return;
+    row.querySelector('.note-display').classList.toggle('d-none');
+    row.querySelector('.note-edit')?.classList.toggle('d-none');
+}
+
+// ── Removal service-request UX ──────────────────────────────────────────────
+(function () {
+    const reasonSel   = document.getElementById('sr-rem-reason');
+    if (!reasonSel) return;
+
+    const dupBlock    = document.getElementById('sr-rem-duplicate-block');
+    const otherBlock  = document.getElementById('sr-rem-other-block');
+    const pastWrap    = document.getElementById('sr-rem-past-cycles');
+    const searchInp   = document.getElementById('sr-rem-orig-search');
+    const resultsWrap = document.getElementById('sr-rem-orig-results');
+    const idInput     = document.getElementById('sr-rem-orig-id');
+    const selectedEl  = document.getElementById('sr-rem-orig-selected');
+    const studentId   = @json($student->id);
+
+    // Toggle sub-blocks + fire past-cycles fetch when relevant.
+    reasonSel.addEventListener('change', async () => {
+        const r = reasonSel.value;
+        dupBlock.classList.toggle('d-none',   r !== 'duplicate');
+        otherBlock.classList.toggle('d-none', r !== 'other');
+        pastWrap.innerHTML = '';
+
+        if (r === 'concluded_previously' || r === 'cancelled_previously') {
+            try {
+                const res = await fetch(`/api/students/${studentId}/past-cycles`, {
+                    headers: { 'Accept': 'application/json' },
+                    credentials: 'same-origin',
+                });
+                const data = await res.json();
+                const matches = data.matches || [];
+                if (matches.length === 0) {
+                    pastWrap.innerHTML = '<div class="alert alert-warning mb-0">⚠ ' +
+                        @json(__('No prior concluded/cancelled record found for this email — verify before submitting.')) +
+                        '</div>';
+                } else {
+                    pastWrap.innerHTML = '<div class="alert alert-info mb-0"><strong>' +
+                        @json(__('Found prior record(s) for this email:')) +
+                        '</strong><ul class="mb-0">' +
+                        matches.map(m => `<li>${m.name} — ${m.status_label} · ${m.created_at}${m.assigned_agent_name ? ' · ' + m.assigned_agent_name : ''}${m.removed ? ' <em>(removed)</em>' : ''}</li>`).join('') +
+                        '</ul></div>';
+                }
+            } catch (e) { /* swallow — non-blocking */ }
+        }
+    });
+
+    // Duplicate search picker.
+    let searchTimer;
+    if (searchInp) {
+        searchInp.addEventListener('input', () => {
+            clearTimeout(searchTimer);
+            const q = searchInp.value.trim();
+            if (q.length < 2) { resultsWrap.innerHTML = ''; return; }
+            searchTimer = setTimeout(async () => {
+                try {
+                    const res = await fetch(`/api/students/search?q=${encodeURIComponent(q)}`, {
+                        headers: { 'Accept': 'application/json' },
+                        credentials: 'same-origin',
+                    });
+                    const rows = await res.json();
+                    resultsWrap.innerHTML = rows.slice(0, 8).map(r =>
+                        `<button type="button" class="list-group-item list-group-item-action py-1"
+                                data-id="${r.id}" data-name="${(r.name || '').replace(/"/g,'&quot;')}">
+                            <strong>${r.name}</strong> <small class="text-muted">${r.email || ''}</small>
+                         </button>`
+                    ).join('') || '<div class="text-muted small p-2">No results</div>';
+                    resultsWrap.querySelectorAll('button').forEach(b => {
+                        b.addEventListener('click', () => {
+                            idInput.value     = b.dataset.id;
+                            selectedEl.textContent = '✓ Selected: ' + b.dataset.name;
+                            resultsWrap.innerHTML = '';
+                            searchInp.value   = '';
+                        });
+                    });
+                } catch (e) { /* ignore */ }
+            }, 600);
+        });
+    }
+})();
 </script>
 @endpush

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin\Applications;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\ServiceRequest;
+use App\Models\Student;
 use App\Models\StudentChat;
 use App\Models\StudentStageLog;
 use Illuminate\Http\Request;
@@ -14,6 +16,7 @@ class ServiceRequestController extends Controller
     public function documentation(Request $request) { return $this->index($request, 'documentation'); }
     public function refunds(Request $request)       { return $this->index($request, 'refund'); }
     public function cancellations(Request $request)  { return $this->index($request, 'cancellation'); }
+    public function removals(Request $request)       { return $this->index($request, 'removal'); }
 
     private function index(Request $request, string $type)
     {
@@ -42,7 +45,36 @@ class ServiceRequestController extends Controller
         $serviceRequest->load(['student.salesConsultant', 'student.assignedAgent', 'requester', 'attachments']);
         $statuses = $serviceRequest->validStatuses();
 
-        return view('admin.applications.service_requests.show', compact('serviceRequest', 'statuses'));
+        // Removal-type evidence: past-cycle matches + the linked "original" student
+        // when the agent claimed duplicate. Admin uses these to decide.
+        $pastCycles       = collect();
+        $originalStudent  = null;
+        if ($serviceRequest->type === 'removal') {
+            $data       = $serviceRequest->data ?? [];
+            $reasonCode = $data['reason_code'] ?? null;
+            $email      = $serviceRequest->student->email;
+
+            if (in_array($reasonCode, ['concluded_previously', 'cancelled_previously'], true) && $email) {
+                $pastCycles = Student::withTrashed()
+                    ->where('email', $email)
+                    ->where('id', '!=', $serviceRequest->student_id)
+                    ->whereIn('status', ['concluded', 'cancelled'])
+                    ->with('assignedAgent:id,name')
+                    ->orderByDesc('created_at')
+                    ->limit(10)
+                    ->get();
+            }
+
+            if ($reasonCode === 'duplicate' && !empty($data['original_student_id'])) {
+                $originalStudent = Student::withTrashed()
+                    ->with('assignedAgent:id,name')
+                    ->find($data['original_student_id']);
+            }
+        }
+
+        return view('admin.applications.service_requests.show', compact(
+            'serviceRequest', 'statuses', 'pastCycles', 'originalStudent'
+        ));
     }
 
     public function update(Request $request, ServiceRequest $serviceRequest)
@@ -105,6 +137,23 @@ class ServiceRequestController extends Controller
                         'cancellation_justified' => $data['cancellation_justified'] ?? $student->cancellation_justified,
                         'application_status'     => 'cancelled',
                     ]);
+                });
+            }
+
+            if ($serviceRequest->type === 'removal') {
+                $student = $serviceRequest->student;
+                $data    = $serviceRequest->data ?? [];
+                $userId  = $request->user()->id;
+
+                DB::transaction(function () use ($student, $data, $userId) {
+                    ActivityLog::create([
+                        'user_id'    => $userId,
+                        'student_id' => $student->id,
+                        'action'     => 'removed',
+                        'new_value'  => $data['reason_code'] ?? 'unknown',
+                    ]);
+                    // Soft-delete — students.deleted_at populates, history preserved.
+                    $student->delete();
                 });
             }
         }

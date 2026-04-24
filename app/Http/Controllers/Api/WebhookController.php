@@ -3,13 +3,17 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\InsurancePolicy;
 use App\Models\Note;
 use App\Models\Notification;
+use App\Models\PendingReapplication;
 use App\Models\Student;
 use App\Models\User;
 use App\Services\AssignmentService;
 use App\Services\PhoneNormaliser;
+use App\Services\ReapplicationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class WebhookController extends Controller
 {
@@ -224,6 +228,23 @@ class WebhookController extends Controller
             'reduced_entry_status'      => $hasReducedEntry ? 'pending' : null,
         ];
 
+        // 10a. Paid insurance forms no longer create a Student row — they become an InsurancePolicy
+        //      attached to the existing student (matched by phone / email / name).
+        if ($productType === 'insurance') {
+            return $this->handleInsuranceForm($whatsappPhone, $studentEmail, $studentName, $price, $pendingDocs, $productRaw, $assignment, $payload);
+        }
+
+        // 10b. Reapplications take over the existing student's active fields instead of creating a
+        //      duplicate row. If we can't find the student, the form goes to the pending-match queue.
+        if ($productType === 'reapplication') {
+            return $this->handleReapplicationForm(
+                $whatsappPhone, $studentEmail, $studentName,
+                $course, $university, $intake,
+                $newStudentData['sales_price'],
+                $productRaw, $payload
+            );
+        }
+
         // 11. Try to find an existing student (phone first, then name)
         $existing = null;
         if ($whatsappPhone) {
@@ -268,34 +289,7 @@ class WebhookController extends Controller
         $priceStr      = $price ?: '—';
         $pendingStr    = $pendingDocs ? " Details: {$pendingDocs}" : '';
 
-        // 13a. Reapplication — honour reapplication_action
-        if ($productType === 'reapplication') {
-            if ($reappAction === 'cancel_previous') {
-                $existing->update(['status' => 'cancelled']);
-                $newStudent = Student::create($newStudentData);
-                $this->appendSystemNote($existing, "Cancelled due to reapplication — see new student #{$newStudent->id}.");
-                $this->appendSystemNote($newStudent, "Reapplication — replaces cancelled student #{$existing->id}.");
-                $this->notifyAgent($newStudent->assigned_cs_agent_id, $newStudent->id);
-                $this->notifyApplicationsTeam($newStudent->id);
-                return response()->json(['ok' => true, 'action' => 'reapplication_cancel_previous'], 200);
-            }
-
-            if ($reappAction === 'keep_previous') {
-                $newStudent = Student::create($newStudentData);
-                $this->appendSystemNote($existing, "Reapplication submitted — see new student #{$newStudent->id}.");
-                $this->appendSystemNote($newStudent, "Reapplication — previous student #{$existing->id}.");
-                $this->notifyAgent($newStudent->assigned_cs_agent_id, $newStudent->id);
-                $this->notifyApplicationsTeam($newStudent->id);
-                return response()->json(['ok' => true, 'action' => 'reapplication_keep_previous'], 200);
-            }
-
-            // Defensive: reapplication but no action specified
-            $this->appendSystemNote($existing, "Reapplication submitted but no action specified (keep/cancel). Please review.");
-            $this->notifyAgent($existing->assigned_cs_agent_id, $existing->id, 'additional_form_submission');
-            return response()->json(['ok' => true, 'action' => 'reapplication_no_action'], 200);
-        }
-
-        // 13b. Add-on products → note + notify, no new student
+        // 13a. Add-on products → note + notify, no new student
         $addOnTypes = ['insurance', 'emergencial_tax', 'learn_protection', 'other'];
         if (in_array($productType, $addOnTypes, true)) {
             $this->appendSystemNote(
@@ -313,6 +307,161 @@ class WebhookController extends Controller
         );
         $this->notifyAgent($existing->assigned_cs_agent_id, $existing->id, 'additional_form_submission');
         return response()->json(['ok' => true, 'action' => 'duplicate_note'], 200);
+    }
+
+    /**
+     * Paid insurance form → create an InsurancePolicy (attached to existing student
+     * when we can match by phone, email, or name). No new Student row is created.
+     */
+    private function handleInsuranceForm(
+        ?string $whatsappPhone,
+        ?string $studentEmail,
+        ?string $studentName,
+        ?string $price,
+        ?string $pendingDocs,
+        ?string $productRaw,
+        array $assignment,
+        array $rawPayload,
+    ) {
+        $existing  = null;
+        $matchedBy = null;
+
+        if ($whatsappPhone) {
+            $existing = Student::where('whatsapp_phone', $whatsappPhone)->first();
+            if ($existing) $matchedBy = 'phone';
+        }
+        if (!$existing && $studentEmail) {
+            $existing = Student::whereRaw('LOWER(TRIM(email)) = ?', [mb_strtolower(trim($studentEmail))])->first();
+            if ($existing) $matchedBy = 'email';
+        }
+        if (!$existing && $studentName) {
+            $existing = Student::whereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower(trim($studentName))])->first();
+            if ($existing) $matchedBy = 'name';
+        }
+
+        $priceCents = $price
+            ? (int) round(((float) str_replace(['.', ','], ['', '.'], $price)) * 100)
+            : (int) config('insurance.default_price_cents');
+
+        $policy = InsurancePolicy::create([
+            'student_id'     => $existing?->id,
+            'type'           => 'paid',
+            'source'         => 'form',
+            'status'         => 'awaiting_payment',
+            'price_cents'    => $priceCents,
+            'cost_cents'     => (int) config('insurance.default_cost_cents'),
+            'matched_by'     => $matchedBy,
+            'form_payload'   => $rawPayload,
+            'approval_notes' => $pendingDocs,
+        ]);
+
+        if ($existing) {
+            $this->appendSystemNote(
+                $existing,
+                "Paid insurance form received (" . ($productRaw ?? 'Insurance') . ") — policy #{$policy->id} created."
+            );
+            $this->notifyAgent($existing->assigned_cs_agent_id, $existing->id, 'additional_form_submission');
+        }
+
+        $this->notifyApplicationsTeamForPolicy($policy->id, (bool) $existing);
+
+        return response()->json([
+            'ok'        => true,
+            'action'    => 'insurance_paid_' . ($existing ? 'matched' : 'unmatched'),
+            'policy_id' => $policy->id,
+        ], 200);
+    }
+
+    /**
+     * Reapplication form → update existing Student in place via ReapplicationService.
+     * No new Student row. If no match, queue a PendingReapplication for admin review.
+     */
+    private function handleReapplicationForm(
+        ?string $whatsappPhone,
+        ?string $studentEmail,
+        ?string $studentName,
+        ?string $course,
+        ?string $university,
+        ?string $intake,
+        $salesPrice,
+        ?string $productRaw,
+        array $rawPayload,
+    ) {
+        $existing  = null;
+        $matchedBy = null;
+
+        if ($studentEmail) {
+            $existing = Student::whereRaw('LOWER(TRIM(email)) = ?', [mb_strtolower(trim($studentEmail))])->first();
+            if ($existing) $matchedBy = 'email';
+        }
+        if (!$existing && $whatsappPhone) {
+            $existing = Student::where('whatsapp_phone', $whatsappPhone)->first();
+            if ($existing) $matchedBy = 'phone';
+        }
+        if (!$existing && $studentName) {
+            $existing = Student::whereRaw('LOWER(TRIM(name)) = ?', [mb_strtolower(trim($studentName))])->first();
+            if ($existing) $matchedBy = 'name';
+        }
+
+        if ($existing) {
+            (new ReapplicationService())->transition(
+                $existing,
+                [
+                    'course'      => $course,
+                    'university'  => $university,
+                    'intake'      => $intake,
+                    'sales_price' => $salesPrice,
+                ],
+                $matchedBy,
+                null  // webhook actor — no admin user
+            );
+
+            return response()->json([
+                'ok'         => true,
+                'action'     => 'reapplication_matched',
+                'student_id' => $existing->id,
+                'cycle'      => $existing->fresh()->reapplication_count,
+                'matched_by' => $matchedBy,
+            ], 200);
+        }
+
+        $pending = PendingReapplication::create([
+            'name'           => $studentName,
+            'email'          => $studentEmail,
+            'whatsapp_phone' => $whatsappPhone,
+            'product_raw'    => $productRaw,
+            'form_payload'   => $rawPayload,
+            'status'         => PendingReapplication::STATUS_PENDING,
+        ]);
+
+        foreach (User::where('role', 'application')->where('active', true)->pluck('id') as $uid) {
+            Notification::create([
+                'user_id' => $uid,
+                'type'    => 'reapplication_pending_match',
+                'data'    => ['pending_reapplication_id' => $pending->id],
+            ]);
+        }
+
+        return response()->json([
+            'ok'         => true,
+            'action'     => 'reapplication_pending_match',
+            'pending_id' => $pending->id,
+        ], 200);
+    }
+
+    private function notifyApplicationsTeamForPolicy(int $policyId, bool $isMatched): void
+    {
+        $userIds = User::where('role', 'application')
+            ->where('active', true)
+            ->pluck('id');
+
+        foreach ($userIds as $uid) {
+            Notification::create([
+                'user_id' => $uid,
+                'type'    => 'application_dispatch',
+                'data'    => ['insurance_policy_id' => $policyId, 'matched' => $isMatched],
+            ]);
+        }
     }
 
     private function appendSystemNote(Student $student, string $body): void

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\SalesConsultant;
 use App\Models\ScheduledStudentMessage;
 use App\Models\Student;
@@ -36,8 +37,25 @@ class StudentController extends Controller
                 $query->where('assigned_cs_agent_id', $request->agent);
             }
         }
+        if ($request->filled('reapplication')) {
+            if ($request->reapplication === 'only') {
+                $query->where('reapplication_count', '>', 0);
+            } elseif ($request->reapplication === 'new') {
+                $query->where('reapplication_count', 0);
+            }
+        }
 
-        $students = $query->latest()->paginate(20)->withQueryString();
+        $students = $query
+            ->orderByRaw('CASE WHEN next_followup_date IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('next_followup_date')
+            ->orderByRaw("CASE priority
+                WHEN 'high'   THEN 1
+                WHEN 'medium' THEN 2
+                WHEN 'low'    THEN 3
+                ELSE 4 END")
+            ->orderByDesc('updated_at')
+            ->paginate(20)
+            ->withQueryString();
         $agents   = User::where('role', 'cs_agent')->where('active', true)->get();
 
         return view('admin.students.index', compact('students', 'agents', 'sla'));
@@ -183,5 +201,36 @@ class StudentController extends Controller
 
         return redirect()->route('admin.students.index')
             ->with('success', "{$count} students reassigned successfully.");
+    }
+
+    // Soft-deleted students queue with Restore action.
+    public function removed(Request $request)
+    {
+        $query = Student::onlyTrashed()->with(['assignedAgent', 'salesConsultant']);
+
+        if ($request->filled('search')) {
+            $q = $request->search;
+            $query->where(fn($q2) => $q2->where('name', 'like', "%{$q}%")
+                                        ->orWhere('email', 'like', "%{$q}%"));
+        }
+
+        $students = $query->latest('deleted_at')->paginate(30)->withQueryString();
+
+        return view('admin.students.removed', compact('students'));
+    }
+
+    public function restore(Request $request, int $studentId)
+    {
+        $student = Student::withTrashed()->findOrFail($studentId);
+        $student->restore();
+
+        ActivityLog::create([
+            'user_id'    => $request->user()->id,
+            'student_id' => $student->id,
+            'action'     => 'restored',
+        ]);
+
+        return redirect()->route('admin.students.removed')
+            ->with('success', "Student {$student->name} restored.");
     }
 }

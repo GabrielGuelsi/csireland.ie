@@ -5,6 +5,8 @@ use App\Http\Controllers\Admin\AlertRuleController;
 use App\Http\Controllers\Admin\Applications\ApplicationPipelineController;
 use App\Http\Controllers\Admin\Applications\ApplicationStudentController;
 use App\Http\Controllers\Admin\Applications\DispatchController;
+use App\Http\Controllers\Admin\Applications\InsurancePolicyController as AppInsurancePolicyController;
+use App\Http\Controllers\Admin\Applications\ReapplicationController as AppReapplicationController;
 use App\Http\Controllers\Admin\Applications\ServiceRequestAttachmentController as AppAttachmentController;
 use App\Http\Controllers\Admin\Applications\ServiceRequestController as AppServiceRequestController;
 use App\Http\Controllers\Admin\Applications\SpecialApprovalController;
@@ -54,12 +56,14 @@ Route::middleware(['auth', 'admin_or_application'])->prefix('admin')->name('admi
     // Students
     Route::get('students',                               [StudentController::class, 'index'])->name('students.index');
     Route::get('students/create',                        [StudentController::class, 'create'])->name('students.create');
+    Route::get('students/removed',                       [StudentController::class, 'removed'])->name('students.removed');
     Route::post('students',                              [StudentController::class, 'store'])->name('students.store');
     Route::get('students/{student}',                     [StudentController::class, 'show'])->name('students.show');
     Route::get('students/{student}/edit',                [StudentController::class, 'edit'])->name('students.edit');
     Route::match(['PUT','PATCH'], 'students/{student}',  [StudentController::class, 'update'])->name('students.update');
     Route::patch('students/{student}/reassign',          [StudentController::class, 'reassign'])->name('students.reassign');
     Route::post('students/bulk-reassign',                [StudentController::class, 'bulkReassign'])->name('students.bulkReassign');
+    Route::post('students/{student}/restore',            [StudentController::class, 'restore'])->name('students.restore');
     Route::patch('students/{student}/gift-received',     [StudentController::class, 'markGiftReceived'])->name('students.markGiftReceived');
 
     // CS Agents
@@ -104,7 +108,8 @@ Route::middleware(['auth', 'admin_or_application'])->prefix('admin')->name('admi
     Route::resource('influencers', InfluencerController::class)->names('influencers')->except(['show', 'create', 'edit']);
 
     // Reports
-    Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('reports',           [ReportController::class, 'index'])->name('reports.index');
+    Route::get('reports/insurance', [ReportController::class, 'insurance'])->name('reports.insurance');
 
     // Applications team
     Route::prefix('applications')->name('applications.')->group(function () {
@@ -114,6 +119,7 @@ Route::middleware(['auth', 'admin_or_application'])->prefix('admin')->name('admi
         Route::get('service-requests/documentation',            [AppServiceRequestController::class, 'documentation'])->name('service-requests.documentation');
         Route::get('service-requests/refunds',                [AppServiceRequestController::class, 'refunds'])->name('service-requests.refunds');
         Route::get('service-requests/cancellations',          [AppServiceRequestController::class, 'cancellations'])->name('service-requests.cancellations');
+        Route::get('service-requests/removals',               [AppServiceRequestController::class, 'removals'])->name('service-requests.removals');
         Route::get('service-requests/{serviceRequest}',       [AppServiceRequestController::class, 'show'])->name('service-requests.show');
         Route::patch('service-requests/{serviceRequest}',     [AppServiceRequestController::class, 'update'])->name('service-requests.update');
         Route::get('service-requests/attachments/{attachment}/download', [AppAttachmentController::class, 'download'])->name('service-requests.attachments.download');
@@ -124,6 +130,20 @@ Route::middleware(['auth', 'admin_or_application'])->prefix('admin')->name('admi
         Route::get('special-approvals',             [SpecialApprovalController::class, 'index'])->name('special-approvals.index');
         Route::get('special-approvals/{student}',   [SpecialApprovalController::class, 'show'])->name('special-approvals.show');
         Route::patch('special-approvals/{student}', [SpecialApprovalController::class, 'update'])->name('special-approvals.update');
+
+        // Insurance policies
+        Route::get('insurance-policies',                     [AppInsurancePolicyController::class, 'index'])->name('insurance-policies.index');
+        Route::get('insurance-policies/students/search',     [AppInsurancePolicyController::class, 'searchStudents'])->name('insurance-policies.students.search');
+        Route::get('insurance-policies/{policy}',            [AppInsurancePolicyController::class, 'show'])->name('insurance-policies.show');
+        Route::patch('insurance-policies/{policy}',          [AppInsurancePolicyController::class, 'update'])->name('insurance-policies.update');
+        Route::post('insurance-policies/{policy}/attach',    [AppInsurancePolicyController::class, 'attachStudent'])->name('insurance-policies.attach');
+
+        // Reapplications (pending match queue + student transitions)
+        Route::get('reapplications',                         [AppReapplicationController::class, 'index'])->name('reapplications.index');
+        Route::get('reapplications/students/search',         [AppReapplicationController::class, 'searchStudents'])->name('reapplications.students.search');
+        Route::get('reapplications/{reapplication}',         [AppReapplicationController::class, 'show'])->name('reapplications.show');
+        Route::post('reapplications/{reapplication}/match',  [AppReapplicationController::class, 'match'])->name('reapplications.match');
+        Route::post('reapplications/{reapplication}/reject', [AppReapplicationController::class, 'reject'])->name('reapplications.reject');
     });
 
     // Student chat (shared between CS admins and Applications team)
@@ -154,6 +174,7 @@ Route::middleware(['auth', 'cs_agent'])->prefix('my')->name('my.')->group(functi
     Route::patch('students/{student}/gift-received', [MyStudentController::class, 'markGiftReceived'])->name('students.giftReceived');
     Route::patch('students/{student}/followup', [MyStudentController::class, 'updateFollowup'])->name('students.followup');
     Route::post('students/{student}/notes',     [MyStudentController::class, 'addNote'])->name('students.notes.store');
+    Route::patch('students/{student}/notes/{note}', [MyStudentController::class, 'updateNote'])->name('students.notes.update');
     Route::post('students/{student}/service-requests', [MyServiceRequestController::class, 'store'])->name('students.serviceRequests.store');
     Route::patch('scheduled-messages/{scheduledMessage}/sent', [MyStudentController::class, 'markScheduledSent'])->name('scheduledMessages.sent');
 

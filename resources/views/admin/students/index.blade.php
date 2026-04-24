@@ -57,6 +57,11 @@ $priorityBadge = ['high' => 'danger', 'medium' => 'warning', 'low' => 'secondary
                 <option value="{{ $a->id }}" {{ request('agent') == $a->id ? 'selected' : '' }}>{{ $a->name }}</option>
                 @endforeach
             </select>
+            <select name="reapplication" class="form-control mr-2">
+                <option value="">All (reapplied + new)</option>
+                <option value="only" {{ request('reapplication') === 'only' ? 'selected' : '' }}>Reaplicados</option>
+                <option value="new"  {{ request('reapplication') === 'new'  ? 'selected' : '' }}>Apenas novos</option>
+            </select>
             <button type="submit" class="btn btn-primary">Filter</button>
             <a href="{{ route('admin.students.index') }}" class="btn btn-secondary ml-1">Clear</a>
         </form>
@@ -96,6 +101,9 @@ $priorityBadge = ['high' => 'danger', 'medium' => 'warning', 'low' => 'secondary
                 <tr>
                     <td>
                         {{ $student->name }}
+                        @if($student->reapplication_count > 0)
+                        <span class="badge badge-info" title="Aplicação original: {{ $student->original_course }} — {{ $student->original_university }}">Reapp. #{{ $student->reapplication_count }}</span>
+                        @endif
                         @if($student->date_of_birth && $student->date_of_birth->format('m-d') === now()->format('m-d'))
                         <span title="Birthday today!">🎂</span>
                         @endif

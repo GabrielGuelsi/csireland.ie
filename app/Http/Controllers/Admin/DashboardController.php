@@ -73,7 +73,7 @@ class DashboardController extends Controller
         $slaBreaches = Student::whereNotIn('status', ['cancelled', 'concluded'])
             ->with('assignedAgent')
             ->get()
-            ->filter(fn($s) => $sla->getStatus($s)['overdue'])
+            ->filter(fn($s) => $sla->getStatus($s)['overdue_strict'])
             ->values();
 
         // Follow-ups due today or overdue

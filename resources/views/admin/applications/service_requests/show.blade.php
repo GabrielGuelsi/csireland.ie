@@ -69,10 +69,88 @@
                         <dd class="col-sm-7">{{ $serviceRequest->data['university'] ?? '—' }}</dd>
                         <dt class="col-sm-5">Reason</dt>
                         <dd class="col-sm-7">{{ $serviceRequest->data['reason'] ?? '—' }}</dd>
+
+                    @elseif($serviceRequest->type === 'removal')
+                        @php
+                            $reasonLabels = [
+                                'duplicate'            => 'Duplicate student',
+                                'concluded_previously' => 'Already concluded previously',
+                                'cancelled_previously' => 'Already cancelled previously',
+                                'other'                => 'Other',
+                            ];
+                            $reasonCode = $serviceRequest->data['reason_code'] ?? null;
+                        @endphp
+                        <dt class="col-sm-5">Reason</dt>
+                        <dd class="col-sm-7"><strong>{{ $reasonLabels[$reasonCode] ?? $reasonCode }}</strong></dd>
+                        @if(!empty($serviceRequest->data['reason_note']))
+                            <dt class="col-sm-5">Agent explanation</dt>
+                            <dd class="col-sm-7">{{ $serviceRequest->data['reason_note'] }}</dd>
+                        @endif
                     @endif
                 </dl>
             </div>
         </div>
+
+        {{-- Removal evidence: linked original student (duplicate reason) --}}
+        @if($serviceRequest->type === 'removal' && isset($originalStudent) && $originalStudent)
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Duplicate of</h3>
+            </div>
+            <div class="card-body">
+                <div><strong>{{ $originalStudent->name }}</strong>
+                    @if($originalStudent->deleted_at)
+                        <span class="badge badge-secondary">already removed</span>
+                    @endif
+                </div>
+                <div class="text-muted" style="font-size:13px;">
+                    {{ $originalStudent->email ?? '—' }}
+                    · {{ \App\Models\Student::statusLabel($originalStudent->status ?? '') }}
+                    · assigned to {{ $originalStudent->assignedAgent?->name ?? '—' }}
+                    · created {{ $originalStudent->created_at->format('d M Y') }}
+                </div>
+            </div>
+        </div>
+        @endif
+
+        {{-- Removal evidence: past-cycle matches (concluded/cancelled reason) --}}
+        @if($serviceRequest->type === 'removal' && isset($pastCycles))
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">
+                    Past-cycle matches for this email
+                    <small class="text-muted">({{ $pastCycles->count() }})</small>
+                </h3>
+            </div>
+            <div class="card-body p-0">
+                @if($pastCycles->isEmpty())
+                    <div class="p-3 text-muted">
+                        ⚠ No prior concluded/cancelled record found for this email.
+                        The agent's claim is not corroborated by the database.
+                    </div>
+                @else
+                    <table class="table table-sm mb-0">
+                        <thead><tr><th>Name</th><th>Status</th><th>Assigned to</th><th>Created</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach($pastCycles as $m)
+                            <tr>
+                                <td>{{ $m->name }}</td>
+                                <td>{{ \App\Models\Student::statusLabel($m->status ?? '') }}</td>
+                                <td>{{ $m->assignedAgent?->name ?? '—' }}</td>
+                                <td>{{ $m->created_at->format('d M Y') }}</td>
+                                <td>
+                                    @if($m->deleted_at)
+                                        <span class="badge badge-secondary">removed</span>
+                                    @endif
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                @endif
+            </div>
+        </div>
+        @endif
 
         {{-- Attachments --}}
         @if($serviceRequest->attachments->isNotEmpty())
@@ -147,6 +225,8 @@
                 'documentation' => 'admin.applications.service-requests.documentation',
                 'refund'        => 'admin.applications.service-requests.refunds',
                 'cancellation'  => 'admin.applications.service-requests.cancellations',
+                'removal'       => 'admin.applications.service-requests.removals',
+                default         => 'admin.applications.service-requests.documentation',
             };
         @endphp
         <a href="{{ route($backRoute) }}" class="btn btn-default btn-sm">

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Jobs\CreateStudentScheduledMessagesJob;
 use App\Models\ActivityLog;
+use App\Models\ServiceRequest;
 use App\Models\Student;
 use App\Models\StudentStageLog;
 use App\Services\PhoneNormaliser;
@@ -50,7 +51,16 @@ class StudentController extends Controller
         if ($ownsOrAdmin($student)) {
             // Re-fetch with the full relation set the renderer needs
             $student->load(['salesConsultant', 'notes.author', 'stageLogs']);
-            return response()->json(['student' => $this->formatStudent($student)]);
+            $hasPendingRemoval = ServiceRequest::where('type', 'removal')
+                ->where('status', 'pending')
+                ->where('student_id', $student->id)
+                ->exists();
+            return response()->json([
+                'student' => $this->formatStudent(
+                    $student,
+                    $hasPendingRemoval ? [$student->id] : []
+                ),
+            ]);
         }
 
         return response()->json(['student' => $this->formatStudentMinimal($student)]);
@@ -120,11 +130,18 @@ class StudentController extends Controller
 
         $students = $query->get();
 
+        // Batch-load pending-removal flag once for the whole page to avoid N+1.
+        $pendingRemovalIds = ServiceRequest::where('type', 'removal')
+            ->where('status', 'pending')
+            ->whereIn('student_id', $students->pluck('id'))
+            ->pluck('student_id')
+            ->all();
+
         $grouped = [];
         foreach (Student::allStatuses() as $status) {
             $grouped[$status] = $students
                 ->where('status', $status)
-                ->map(fn($s) => $this->formatStudent($s))
+                ->map(fn($s) => $this->formatStudent($s, $pendingRemovalIds))
                 ->values();
         }
 
@@ -257,7 +274,14 @@ class StudentController extends Controller
         $oldDate = $student->next_followup_date?->format('Y-m-d');
         $oldNote = $student->next_followup_note;
 
-        $student->update($request->only('next_followup_date', 'next_followup_note'));
+        $updates = $request->only('next_followup_date', 'next_followup_note');
+        // Only bump last_contacted_at when the follow-up actually changed — no-op
+        // saves shouldn't reset the priority-SLA timer.
+        if ($oldDate !== ($updates['next_followup_date'] ?? null)
+            || $oldNote !== ($updates['next_followup_note'] ?? null)) {
+            $updates['last_contacted_at'] = now();
+        }
+        $student->update($updates);
 
         // Activity log — date change
         if ($request->has('next_followup_date') && $oldDate !== $request->next_followup_date) {
@@ -356,7 +380,43 @@ class StudentController extends Controller
         ]);
     }
 
-    private function formatStudent(Student $student): array
+    // GET /api/students/{id}/past-cycles
+    // Evidence endpoint for the "Remover da carteira" flow when the agent picks
+    // reason = concluded_previously or cancelled_previously. Returns other
+    // student records (including soft-deleted) that share this email and
+    // landed in a terminal status in a prior cycle.
+    public function pastCycles(Request $request, Student $student)
+    {
+        if (!$request->user()->isAdmin() && $student->assigned_cs_agent_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        if (!$student->email) {
+            return response()->json(['matches' => []]);
+        }
+
+        $matches = Student::withTrashed()
+            ->where('email', $student->email)
+            ->where('id', '!=', $student->id)
+            ->whereIn('status', ['concluded', 'cancelled'])
+            ->with('assignedAgent:id,name')
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get()
+            ->map(fn ($s) => [
+                'id'                  => $s->id,
+                'name'                => $s->name,
+                'status'              => $s->status,
+                'status_label'        => Student::statusLabel($s->status ?? ''),
+                'created_at'          => $s->created_at->toDateString(),
+                'assigned_agent_name' => $s->assignedAgent?->name,
+                'removed'             => $s->deleted_at !== null,
+            ]);
+
+        return response()->json(['matches' => $matches]);
+    }
+
+    private function formatStudent(Student $student, array $pendingRemovalIds = []): array
     {
         $sla = $this->sla->getStatus($student);
 
@@ -396,18 +456,28 @@ class StudentController extends Controller
             'last_contacted_at'       => $student->last_contacted_at?->toIso8601String(),
             'sla_overdue'             => $sla['overdue'],
             'sla_days_remaining'      => $sla['days_remaining'],
+            'removal_pending'         => in_array($student->id, $pendingRemovalIds, true),
             'special_condition_options' => $student->special_condition_options,
             'special_condition_other'   => $student->special_condition_other,
             'special_condition_status'  => $student->special_condition_status,
             'reduced_entry_amount'      => $student->reduced_entry_amount !== null ? (float) $student->reduced_entry_amount : null,
             'reduced_entry_other'       => $student->reduced_entry_other,
             'reduced_entry_status'      => $student->reduced_entry_status,
+            'original_product_type'     => $student->original_product_type,
+            'original_course'           => $student->original_course,
+            'original_university'       => $student->original_university,
+            'original_intake'           => $student->original_intake,
+            'original_sales_price'      => $student->original_sales_price !== null ? (float) $student->original_sales_price : null,
+            'reapplication_count'       => (int) ($student->reapplication_count ?? 0),
+            'last_reapplied_at'         => $student->last_reapplied_at?->toIso8601String(),
             'notes'                   => $student->relationLoaded('notes')
                 ? $student->notes->map(fn($n) => [
                     'id'         => $n->id,
                     'body'       => $n->body,
                     'author'     => $n->author?->name ?? 'System',
+                    'author_id'  => $n->author_id,
                     'created_at' => $n->created_at->toIso8601String(),
+                    'updated_at' => $n->updated_at->toIso8601String(),
                 ])->values()
                 : [],
         ];

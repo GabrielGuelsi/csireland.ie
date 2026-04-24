@@ -401,12 +401,25 @@ return [
             'icon'  => 'fas fa-fw fa-times-circle',
             'can'   => 'access-admin',
         ],
+        [
+            'key'   => 'apps_removals',
+            'text'  => 'Removals',
+            'route' => 'admin.applications.service-requests.removals',
+            'icon'  => 'fas fa-fw fa-user-slash',
+            'can'   => 'access-admin',
+        ],
 
         ['header' => 'TEAM', 'can' => 'access-admin'],
         [
             'text'  => 'Team Members',
             'route' => 'admin.agents.index',
             'icon'  => 'fas fa-fw fa-users',
+            'can'   => 'access-admin',
+        ],
+        [
+            'text'  => 'Removed Students',
+            'route' => 'admin.students.removed',
+            'icon'  => 'fas fa-fw fa-trash-restore',
             'can'   => 'access-admin',
         ],
         [
@@ -462,13 +475,38 @@ return [
             'icon'  => 'fas fa-fw fa-star-half-alt',
             'can'   => 'access-admin',
         ],
+        [
+            'key'   => 'apps_insurance_policies',
+            'text'  => 'Insurance',
+            'route' => 'admin.applications.insurance-policies.index',
+            'icon'  => 'fas fa-fw fa-shield-alt',
+            'can'   => 'access-admin',
+        ],
+        [
+            'key'   => 'apps_reapplications',
+            'text'  => 'Reapplications',
+            'route' => 'admin.applications.reapplications.index',
+            'icon'  => 'fas fa-fw fa-redo',
+            'can'   => 'access-admin',
+        ],
 
         ['header' => 'ANALYTICS', 'can' => 'access-admin'],
         [
-            'text'  => 'Reports',
-            'route' => 'admin.reports.index',
-            'icon'  => 'fas fa-fw fa-chart-bar',
-            'can'   => 'access-admin',
+            'text'    => 'Reports',
+            'icon'    => 'fas fa-fw fa-chart-bar',
+            'can'     => 'access-admin',
+            'submenu' => [
+                [
+                    'text'  => 'Overview',
+                    'route' => 'admin.reports.index',
+                    'icon'  => 'fas fa-fw fa-chart-line',
+                ],
+                [
+                    'text'  => 'Insurance',
+                    'route' => 'admin.reports.insurance',
+                    'icon'  => 'fas fa-fw fa-shield-alt',
+                ],
+            ],
         ],
 
         ['header' => 'ACCOUNT'],

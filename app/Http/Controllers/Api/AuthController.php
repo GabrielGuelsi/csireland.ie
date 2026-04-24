@@ -34,6 +34,7 @@ class AuthController extends Controller
             'agent_id'   => $user->id,
             'agent_name' => $user->name,
             'role'       => $user->role,
+            'is_admin'   => $user->isAdmin(),
         ]);
     }
 

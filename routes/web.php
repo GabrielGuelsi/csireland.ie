@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SalesConsultantController;
 use App\Http\Controllers\Admin\SalesPartialController;
 use App\Http\Controllers\Admin\SalesPeriodGoalController;
+use App\Http\Controllers\Admin\InsuranceSettingController;
 use App\Http\Controllers\Admin\SlaSettingController;
 use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Admin\TemplateController;
@@ -83,6 +84,8 @@ Route::middleware(['auth', 'admin_or_application'])->prefix('admin')->name('admi
     // SLA settings
     Route::get('sla-settings', [SlaSettingController::class, 'index'])->name('sla-settings.index');
     Route::put('sla-settings', [SlaSettingController::class, 'update'])->name('sla-settings.update');
+    Route::get('insurance-settings', [InsuranceSettingController::class, 'index'])->name('insurance-settings.index');
+    Route::put('insurance-settings', [InsuranceSettingController::class, 'update'])->name('insurance-settings.update');
 
     // Templates
     Route::resource('templates', TemplateController::class)->names('templates');
@@ -137,6 +140,7 @@ Route::middleware(['auth', 'admin_or_application'])->prefix('admin')->name('admi
         Route::get('insurance-policies/{policy}',            [AppInsurancePolicyController::class, 'show'])->name('insurance-policies.show');
         Route::patch('insurance-policies/{policy}',          [AppInsurancePolicyController::class, 'update'])->name('insurance-policies.update');
         Route::post('insurance-policies/{policy}/attach',    [AppInsurancePolicyController::class, 'attachStudent'])->name('insurance-policies.attach');
+        Route::delete('insurance-policies/{policy}',         [AppInsurancePolicyController::class, 'destroy'])->name('insurance-policies.destroy');
 
         // Reapplications (pending match queue + student transitions)
         Route::get('reapplications',                         [AppReapplicationController::class, 'index'])->name('reapplications.index');

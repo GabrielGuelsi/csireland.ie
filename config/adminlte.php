@@ -450,6 +450,12 @@ return [
             'can'   => 'access-admin',
         ],
         [
+            'text'  => 'Insurance Pricing',
+            'route' => 'admin.insurance-settings.index',
+            'icon'  => 'fas fa-fw fa-euro-sign',
+            'can'   => 'access-admin',
+        ],
+        [
             'text'  => 'Templates',
             'route' => 'admin.templates.index',
             'icon'  => 'fas fa-fw fa-envelope-open-text',

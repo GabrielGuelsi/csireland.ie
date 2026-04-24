@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\InsurancePolicy;
+use App\Models\InsuranceSetting;
 use App\Models\Note;
 use App\Models\Notification;
 use App\Models\PendingReapplication;
@@ -341,7 +342,7 @@ class WebhookController extends Controller
 
         $priceCents = $price
             ? (int) round(((float) str_replace(['.', ','], ['', '.'], $price)) * 100)
-            : (int) config('insurance.default_price_cents');
+            : InsuranceSetting::get('default_price_cents', (int) config('insurance.default_price_cents'));
 
         $policy = InsurancePolicy::create([
             'student_id'     => $existing?->id,
@@ -349,7 +350,7 @@ class WebhookController extends Controller
             'source'         => 'form',
             'status'         => 'awaiting_payment',
             'price_cents'    => $priceCents,
-            'cost_cents'     => (int) config('insurance.default_cost_cents'),
+            'cost_cents'     => InsuranceSetting::get('default_cost_cents', (int) config('insurance.default_cost_cents')),
             'matched_by'     => $matchedBy,
             'form_payload'   => $rawPayload,
             'approval_notes' => $pendingDocs,

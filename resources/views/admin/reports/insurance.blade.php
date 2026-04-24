@@ -21,32 +21,51 @@
 </div>
 
 <div class="row">
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="small-box bg-success">
             <div class="inner">
                 <h3>€{{ number_format($revenueCents/100, 2, ',', '.') }}</h3>
-                <p>Faturamento (pagos)</p>
+                <p>Faturamento total</p>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="small-box bg-warning">
             <div class="inner">
-                <h3>€{{ number_format($bonificadoCostCents/100, 2, ',', '.') }}</h3>
-                <p>Custo dos bonificados</p>
+                <h3>€{{ number_format($totalCostCents/100, 2, ',', '.') }}</h3>
+                <p>Custo total</p>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="small-box {{ $profitCents >= 0 ? 'bg-info' : 'bg-danger' }}">
             <div class="inner">
                 <h3>€{{ number_format($profitCents/100, 2, ',', '.') }}</h3>
-                <p>Lucro líquido</p>
+                <p>Lucro líquido (geral)</p>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="small-box {{ $paidProfitCents >= 0 ? 'bg-primary' : 'bg-danger' }}">
+            <div class="inner">
+                <h3>€{{ number_format($paidProfitCents/100, 2, ',', '.') }}</h3>
+                <p>Lucro dos pagos (desconsidera bonificados)</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
         <div class="small-box bg-secondary">
+            <div class="inner">
+                <h3>€{{ number_format($bonificadoCostCents/100, 2, ',', '.') }}</h3>
+                <p>Gasto em bonificados</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="small-box bg-light">
             <div class="inner">
                 <h3>{{ $unmatched }}</h3>
                 <p>Não vinculados</p>

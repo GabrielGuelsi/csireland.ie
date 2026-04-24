@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Applications;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\InsurancePolicy;
+use App\Models\InsuranceSetting;
 use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -122,7 +123,8 @@ class SpecialApprovalController extends Controller
             'gov_insurance_50'   => 'gov_50',
         ];
         $opts = $student->special_condition_options ?? [];
-        $defaultPrice = (int) config('insurance.default_price_cents');
+        $defaultPrice = InsuranceSetting::get('default_price_cents', (int) config('insurance.default_price_cents'));
+        $defaultCost  = InsuranceSetting::get('default_cost_cents',  (int) config('insurance.default_cost_cents'));
 
         foreach ($map as $optionCode => $policyType) {
             if (!in_array($optionCode, $opts, true)) continue;
@@ -134,7 +136,7 @@ class SpecialApprovalController extends Controller
                 'source'         => 'admin',
                 'status'         => 'pending',
                 'price_cents'    => $policyType === 'gov_free' ? 0 : (int) round($defaultPrice / 2),
-                'cost_cents'     => (int) config('insurance.default_cost_cents'),
+                'cost_cents'     => $defaultCost,
                 'approved_by'    => $approverId,
                 'approved_at'    => now(),
                 'approval_notes' => $notes,

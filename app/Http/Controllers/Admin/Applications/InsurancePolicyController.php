@@ -110,4 +110,15 @@ class InsurancePolicyController extends Controller
 
         return response()->json($students);
     }
+
+    public function destroy(Request $request, InsurancePolicy $policy)
+    {
+        abort_unless($request->user()->isAdmin(), 403);
+
+        $policy->delete();
+
+        return redirect()
+            ->route('admin.applications.insurance-policies.index')
+            ->with('success', "Insurance policy #{$policy->id} deleted.");
+    }
 }

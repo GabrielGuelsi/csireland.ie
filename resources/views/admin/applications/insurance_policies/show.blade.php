@@ -113,6 +113,19 @@
                 </form>
             </div>
         </div>
+
+        <div class="card card-outline card-danger">
+            <div class="card-header"><h3 class="card-title">Zona de risco</h3></div>
+            <div class="card-body">
+                <form method="POST" action="{{ route('admin.applications.insurance-policies.destroy', $policy) }}"
+                      onsubmit="return confirm('Excluir esta apólice permanentemente? Esta ação não pode ser desfeita.');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-outline-danger btn-block">Excluir apólice #{{ $policy->id }}</button>
+                </form>
+                <small class="text-muted d-block mt-2">A exclusão é permanente e remove a apólice do banco de dados.</small>
+            </div>
+        </div>
     </div>
 </div>
 

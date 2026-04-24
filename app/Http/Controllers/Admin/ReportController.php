@@ -516,9 +516,18 @@ class ReportController extends Controller
         $countsByStatus = (clone $scope)->selectRaw('status, COUNT(*) as c')
             ->groupBy('status')->pluck('c', 'status')->toArray();
 
-        $revenueCents     = (int) (clone $scope)->paid()->sum('price_cents');
+        // Overall aggregates — every policy contributes price AND cost.
+        $revenueCents   = (int) (clone $scope)->sum('price_cents');
+        $totalCostCents = (int) (clone $scope)->sum('cost_cents');
+        $profitCents    = $revenueCents - $totalCostCents;
+
+        // Breakdown: profit from paid policies only (excludes bonificados).
+        $paidRevenueCents = (int) (clone $scope)->paid()->sum('price_cents');
+        $paidCostCents    = (int) (clone $scope)->paid()->sum('cost_cents');
+        $paidProfitCents  = $paidRevenueCents - $paidCostCents;
+
+        // Breakdown: what the company "spent" giving free/discounted insurance away.
         $bonificadoCostCents = (int) (clone $scope)->bonificado()->sum('cost_cents');
-        $profitCents      = $revenueCents - $bonificadoCostCents;
 
         $unmatched = (clone $scope)->unmatched()->count();
 
@@ -529,17 +538,19 @@ class ReportController extends Controller
             ->withQueryString();
 
         return view('admin.reports.insurance', [
-            'year'            => $year,
-            'month'           => $month,
-            'countsByType'    => $countsByType,
-            'countsByStatus'  => $countsByStatus,
-            'revenueCents'    => $revenueCents,
+            'year'                => $year,
+            'month'               => $month,
+            'countsByType'        => $countsByType,
+            'countsByStatus'      => $countsByStatus,
+            'revenueCents'        => $revenueCents,
+            'totalCostCents'      => $totalCostCents,
+            'profitCents'         => $profitCents,
+            'paidProfitCents'     => $paidProfitCents,
             'bonificadoCostCents' => $bonificadoCostCents,
-            'profitCents'     => $profitCents,
-            'unmatched'       => $unmatched,
-            'policies'        => $policies,
-            'statusLabels'    => InsurancePolicy::statusLabels('pt_BR'),
-            'typeLabels'      => InsurancePolicy::typeLabels('pt_BR'),
+            'unmatched'           => $unmatched,
+            'policies'            => $policies,
+            'statusLabels'        => InsurancePolicy::statusLabels('pt_BR'),
+            'typeLabels'          => InsurancePolicy::typeLabels('pt_BR'),
         ]);
     }
 }

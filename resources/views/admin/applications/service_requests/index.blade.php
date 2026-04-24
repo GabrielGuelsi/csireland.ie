@@ -19,6 +19,7 @@
         'documentation' => 'admin.applications.service-requests.documentation',
         'refund'        => 'admin.applications.service-requests.refunds',
         'cancellation'  => 'admin.applications.service-requests.cancellations',
+        'removal'       => 'admin.applications.service-requests.removals',
     };
 @endphp
 

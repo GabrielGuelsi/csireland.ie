@@ -402,10 +402,17 @@ return [
             'can'   => 'access-admin',
         ],
         [
-            'key'   => 'apps_removals',
-            'text'  => 'Removals',
-            'route' => 'admin.applications.service-requests.removals',
-            'icon'  => 'fas fa-fw fa-user-slash',
+            'key'   => 'apps_insurance_policies',
+            'text'  => 'Insurance',
+            'route' => 'admin.applications.insurance-policies.index',
+            'icon'  => 'fas fa-fw fa-shield-alt',
+            'can'   => 'access-admin',
+        ],
+        [
+            'key'   => 'apps_reapplications',
+            'text'  => 'Reapplications',
+            'route' => 'admin.applications.reapplications.index',
+            'icon'  => 'fas fa-fw fa-redo',
             'can'   => 'access-admin',
         ],
 
@@ -476,17 +483,10 @@ return [
             'can'   => 'access-admin',
         ],
         [
-            'key'   => 'apps_insurance_policies',
-            'text'  => 'Insurance',
-            'route' => 'admin.applications.insurance-policies.index',
-            'icon'  => 'fas fa-fw fa-shield-alt',
-            'can'   => 'access-admin',
-        ],
-        [
-            'key'   => 'apps_reapplications',
-            'text'  => 'Reapplications',
-            'route' => 'admin.applications.reapplications.index',
-            'icon'  => 'fas fa-fw fa-redo',
+            'key'   => 'apps_removals',
+            'text'  => 'Removals',
+            'route' => 'admin.applications.service-requests.removals',
+            'icon'  => 'fas fa-fw fa-user-slash',
             'can'   => 'access-admin',
         ],
 

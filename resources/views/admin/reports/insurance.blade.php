@@ -24,7 +24,7 @@
     <div class="col-md-3">
         <div class="small-box bg-success">
             <div class="inner">
-                <h3>R$ {{ number_format($revenueCents/100, 2, ',', '.') }}</h3>
+                <h3>€{{ number_format($revenueCents/100, 2, ',', '.') }}</h3>
                 <p>Faturamento (pagos)</p>
             </div>
         </div>
@@ -32,7 +32,7 @@
     <div class="col-md-3">
         <div class="small-box bg-warning">
             <div class="inner">
-                <h3>R$ {{ number_format($bonificadoCostCents/100, 2, ',', '.') }}</h3>
+                <h3>€{{ number_format($bonificadoCostCents/100, 2, ',', '.') }}</h3>
                 <p>Custo dos bonificados</p>
             </div>
         </div>
@@ -40,7 +40,7 @@
     <div class="col-md-3">
         <div class="small-box {{ $profitCents >= 0 ? 'bg-info' : 'bg-danger' }}">
             <div class="inner">
-                <h3>R$ {{ number_format($profitCents/100, 2, ',', '.') }}</h3>
+                <h3>€{{ number_format($profitCents/100, 2, ',', '.') }}</h3>
                 <p>Lucro líquido</p>
             </div>
         </div>
@@ -115,8 +115,8 @@
                     <td>{{ $p->student?->name ?? '—' }}</td>
                     <td>{{ $typeLabels[$p->type] ?? $p->type }}</td>
                     <td>{{ $statusLabels[$p->status] ?? $p->status }}</td>
-                    <td class="text-right">{{ $p->price_cents !== null ? 'R$ '.number_format($p->price_cents/100, 2, ',', '.') : '—' }}</td>
-                    <td class="text-right">{{ $p->cost_cents !== null ? 'R$ '.number_format($p->cost_cents/100, 2, ',', '.') : '—' }}</td>
+                    <td class="text-right">{{ $p->price_cents !== null ? '€'.number_format($p->price_cents/100, 2, ',', '.') : '—' }}</td>
+                    <td class="text-right">{{ $p->cost_cents !== null ? '€'.number_format($p->cost_cents/100, 2, ',', '.') : '—' }}</td>
                     <td>{{ $p->approver?->name ?? '—' }}</td>
                     <td>{{ $p->created_at->format('d/m/Y') }}</td>
                 </tr>

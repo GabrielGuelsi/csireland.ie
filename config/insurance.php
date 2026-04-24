@@ -1,10 +1,10 @@
 <?php
 
 return [
-    // Standard price a student pays for a paid insurance policy (in cents).
+    // Standard price a student pays for a paid insurance policy, in euro cents (€).
     'default_price_cents' => env('INSURANCE_DEFAULT_PRICE_CENTS', 22000),
 
-    // Standard internal cost of issuing one insurance policy (in cents).
+    // Standard internal cost of issuing one insurance policy, in euro cents (€).
     // Used to compute "how much we're giving away" on bonificado policies.
     'default_cost_cents'  => env('INSURANCE_DEFAULT_COST_CENTS', 22000),
 

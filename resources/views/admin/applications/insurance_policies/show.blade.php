@@ -24,9 +24,9 @@
                     <dt class="col-4">Origem</dt>
                     <dd class="col-8">{{ $policy->source === 'form' ? 'Formulário' : 'Admin' }}</dd>
                     <dt class="col-4">Valor pago</dt>
-                    <dd class="col-8">{{ $policy->price_cents !== null ? 'R$ ' . number_format($policy->price_cents/100, 2, ',', '.') : '—' }}</dd>
+                    <dd class="col-8">{{ $policy->price_cents !== null ? '€' . number_format($policy->price_cents/100, 2, ',', '.') : '—' }}</dd>
                     <dt class="col-4">Custo interno</dt>
-                    <dd class="col-8">{{ $policy->cost_cents !== null ? 'R$ ' . number_format($policy->cost_cents/100, 2, ',', '.') : '—' }}</dd>
+                    <dd class="col-8">{{ $policy->cost_cents !== null ? '€' . number_format($policy->cost_cents/100, 2, ',', '.') : '—' }}</dd>
                     <dt class="col-4">Aprovado por</dt>
                     <dd class="col-8">{{ $policy->approver?->name ?? '—' }}</dd>
                     <dt class="col-4">Aprovado em</dt>

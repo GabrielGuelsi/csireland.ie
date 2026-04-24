@@ -497,7 +497,7 @@ return [
             'can'     => 'access-admin',
             'submenu' => [
                 [
-                    'text'  => 'Overview',
+                    'text'  => 'CS Overview',
                     'route' => 'admin.reports.index',
                     'icon'  => 'fas fa-fw fa-chart-line',
                 ],

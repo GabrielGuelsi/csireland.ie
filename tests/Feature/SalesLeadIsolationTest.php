@@ -217,6 +217,61 @@ class SalesLeadIsolationTest extends TestCase
             'AgentController must auto-link the matching SalesConsultant.');
     }
 
+    public function test_agent_controller_explicit_consultant_pick_overrides_name_match(): void
+    {
+        // Two consultants with similar names — admin will explicitly pick one.
+        $picked   = SalesConsultant::create(['name' => 'R. Silva (legacy spelling)']);
+        $ignored  = SalesConsultant::create(['name' => 'Romario']);
+
+        $resp = $this->actingAs($this->admin)->post(route('admin.agents.store'), [
+            'name'                => 'Romario',
+            'email'               => 'romario-explicit@iso.invalid',
+            'password'            => 'password123',
+            'role'                => 'sales_agent',
+            'sales_consultant_id' => $picked->id,
+        ]);
+        $resp->assertRedirect(route('admin.agents.index'));
+
+        $user = User::where('email', 'romario-explicit@iso.invalid')->first();
+
+        // The picked consultant must be linked, NOT the name-matched one.
+        $this->assertSame($user->id, $picked->fresh()->user_id);
+        $this->assertNull($ignored->fresh()->user_id,
+            'Auto-link by name must be skipped when admin made an explicit pick.');
+    }
+
+    public function test_agent_controller_can_relink_consultant_on_edit(): void
+    {
+        $oldConsultant = SalesConsultant::create(['name' => 'Old Pick']);
+        $newConsultant = SalesConsultant::create(['name' => 'New Pick']);
+
+        // Create the user already linked to the old consultant.
+        $resp = $this->actingAs($this->admin)->post(route('admin.agents.store'), [
+            'name'                => 'Switcher',
+            'email'               => 'switcher@iso.invalid',
+            'password'            => 'password123',
+            'role'                => 'sales_agent',
+            'sales_consultant_id' => $oldConsultant->id,
+        ]);
+        $resp->assertRedirect();
+        $user = User::where('email', 'switcher@iso.invalid')->first();
+        $this->assertSame($user->id, $oldConsultant->fresh()->user_id);
+
+        // Admin edits and switches the consultant link.
+        $resp = $this->actingAs($this->admin)->put(route('admin.agents.update', $user), [
+            'name'                => 'Switcher',
+            'email'               => 'switcher@iso.invalid',
+            'role'                => 'sales_agent',
+            'active'              => 1,
+            'sales_consultant_id' => $newConsultant->id,
+        ]);
+        $resp->assertRedirect();
+
+        // Old should be unlinked, new should be linked.
+        $this->assertNull($oldConsultant->fresh()->user_id, 'Old link must be cleared on relink.');
+        $this->assertSame($user->id, $newConsultant->fresh()->user_id, 'New link must be set.');
+    }
+
     public function test_with_trashed_and_only_trashed_still_exclude_sales_leads(): void
     {
         // Soft-delete the lead so it would appear in trashed queries if the scope failed.

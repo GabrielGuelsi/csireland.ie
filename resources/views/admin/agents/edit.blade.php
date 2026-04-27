@@ -36,11 +36,32 @@
 
             <div class="form-group">
                 <label>Role <span class="text-danger">*</span></label>
-                <select name="role" class="form-control" required>
+                <select name="role" class="form-control" id="role-select" required>
                     <option value="cs_agent" @selected(old('role', $agent->role) === 'cs_agent')>CS Agent</option>
                     <option value="application" @selected(old('role', $agent->role) === 'application')>Applications Team</option>
                     <option value="sales_agent" @selected(old('role', $agent->role) === 'sales_agent')>Sales Agent</option>
                 </select>
+            </div>
+
+            <div class="form-group" id="consultant-link-group" style="display:none">
+                <label>Linked Sales Consultant <small class="text-muted">(historical book of business)</small></label>
+                <select name="sales_consultant_id" class="form-control">
+                    <option value="">— None / unlinked —</option>
+                    @foreach($consultants as $c)
+                        @php
+                            $currentLinkedId = optional($agent->salesConsultant)->id;
+                            $selected = old('sales_consultant_id', $currentLinkedId) == $c->id;
+                        @endphp
+                        <option value="{{ $c->id }}" @selected($selected)>
+                            {{ $c->name }} ({{ $c->students_count }} student{{ $c->students_count === 1 ? '' : 's' }})
+                            @if($c->user_id && $c->user_id === $agent->id) — currently linked @endif
+                        </option>
+                    @endforeach
+                </select>
+                <small class="text-muted">
+                    Pick the legacy "Sales Advisor" record this user owned. Their historical students
+                    appear on /sales/leads/ongoing once linked. Pick "None" to unlink.
+                </small>
             </div>
 
             <div class="form-group">
@@ -70,4 +91,18 @@
     </div>
 </div>
 
+@stop
+
+@section('js')
+<script>
+(function() {
+    var roleSelect = document.getElementById('role-select');
+    var linkGroup  = document.getElementById('consultant-link-group');
+    function toggle() {
+        linkGroup.style.display = roleSelect.value === 'sales_agent' ? '' : 'none';
+    }
+    roleSelect.addEventListener('change', toggle);
+    toggle();
+})();
+</script>
 @stop

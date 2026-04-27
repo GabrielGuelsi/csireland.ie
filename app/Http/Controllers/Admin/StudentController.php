@@ -206,7 +206,9 @@ class StudentController extends Controller
     // Soft-deleted students queue with Restore action.
     public function removed(Request $request)
     {
-        $query = Student::onlyTrashed()->with(['assignedAgent', 'salesConsultant']);
+        $query = Student::onlyTrashed()
+            ->whereNull('sales_stage')
+            ->with(['assignedAgent', 'salesConsultant']);
 
         if ($request->filled('search')) {
             $q = $request->search;
@@ -221,7 +223,9 @@ class StudentController extends Controller
 
     public function restore(Request $request, int $studentId)
     {
-        $student = Student::withTrashed()->findOrFail($studentId);
+        $student = Student::withTrashed()
+            ->whereNull('sales_stage')
+            ->findOrFail($studentId);
         $student->restore();
 
         ActivityLog::create([

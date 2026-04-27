@@ -39,6 +39,7 @@
                 <select name="role" class="form-control" required>
                     <option value="cs_agent" @selected(old('role', $agent->role) === 'cs_agent')>CS Agent</option>
                     <option value="application" @selected(old('role', $agent->role) === 'application')>Applications Team</option>
+                    <option value="sales_agent" @selected(old('role', $agent->role) === 'sales_agent')>Sales Agent</option>
                 </select>
             </div>
 

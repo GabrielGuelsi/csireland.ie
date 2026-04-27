@@ -27,6 +27,7 @@ class AppServiceProvider extends ServiceProvider
         // Menu-visibility gates for AdminLTE sidebar (config/adminlte.php uses 'can' keys).
         Gate::define('access-admin', fn (User $u) => $u->isAdminOrApplication());
         Gate::define('access-my',    fn (User $u) => $u->isCsAgent() || $u->isAdmin());
+        Gate::define('access-sales', fn (User $u) => $u->isSalesAgent() || $u->isAdmin());
 
         Event::listen(BuildingMenu::class, DecorateApplicationsMenu::class);
     }

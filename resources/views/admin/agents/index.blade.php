@@ -35,6 +35,8 @@
                     <td>
                         @if($agent->role === 'application')
                             <span class="badge badge-info">Applications</span>
+                        @elseif($agent->role === 'sales_agent')
+                            <span class="badge badge-warning">Sales</span>
                         @else
                             <span class="badge badge-secondary">CS Agent</span>
                         @endif

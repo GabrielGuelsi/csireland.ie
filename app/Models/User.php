@@ -57,14 +57,38 @@ class User extends Authenticatable
         return $this->role === 'cs_agent';
     }
 
+    public function isSalesAgent(): bool
+    {
+        return $this->role === 'sales_agent';
+    }
+
+    public function assignedSalesLeads()
+    {
+        return $this->hasMany(Student::class, 'assigned_sales_agent_id')->salesLeadsOnly();
+    }
+
+    /**
+     * The SalesConsultant record linked to this user (sales_agent role only).
+     * Lets the sales UI surface their historical book of business — students
+     * that came in via the form webhook with their name as Sales Advisor.
+     */
+    public function salesConsultant()
+    {
+        return $this->hasOne(SalesConsultant::class);
+    }
+
     /**
      * The route this user should land on after login or when visiting /.
      * Admin / Applications → admin dashboard. CS agents → /my dashboard.
+     * Sales agents → sales kanban.
      */
     public function defaultRoute(): string
     {
         if ($this->isCsAgent()) {
             return route('my.dashboard', absolute: false);
+        }
+        if ($this->isSalesAgent()) {
+            return route('sales.kanban', absolute: false);
         }
         return route('admin.dashboard', absolute: false);
     }

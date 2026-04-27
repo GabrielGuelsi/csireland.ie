@@ -396,6 +396,7 @@ class StudentController extends Controller
         }
 
         $matches = Student::withTrashed()
+            ->whereNull('sales_stage')
             ->where('email', $student->email)
             ->where('id', '!=', $student->id)
             ->whereIn('status', ['concluded', 'cancelled'])

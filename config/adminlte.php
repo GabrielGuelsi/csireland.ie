@@ -322,6 +322,33 @@ return [
             ],
         ],
 
+        // ---------- SALES PORTAL (prototype) ----------
+        ['header' => 'SALES', 'can' => 'access-sales'],
+        [
+            'text'  => 'Sales Dashboard',
+            'route' => 'sales.dashboard',
+            'icon'  => 'fas fa-fw fa-tachometer-alt',
+            'can'   => 'access-sales',
+        ],
+        [
+            'text'  => 'Pipeline (Kanban)',
+            'route' => 'sales.kanban',
+            'icon'  => 'fas fa-fw fa-columns',
+            'can'   => 'access-sales',
+        ],
+        [
+            'text'  => 'New Lead',
+            'route' => 'sales.leads.create',
+            'icon'  => 'fas fa-fw fa-user-plus',
+            'can'   => 'access-sales',
+        ],
+        [
+            'text'  => 'My Students',
+            'route' => 'sales.leads.ongoing',
+            'icon'  => 'fas fa-fw fa-handshake',
+            'can'   => 'access-sales',
+        ],
+
         // ---------- CS AGENT PORTAL (/my) ----------
         ['header' => 'MY WORK', 'can' => 'access-my'],
         [

@@ -46,7 +46,12 @@
                 <select name="role" class="form-control" required>
                     <option value="cs_agent" @selected(old('role', 'cs_agent') === 'cs_agent')>CS Agent</option>
                     <option value="application" @selected(old('role') === 'application')>Applications Team</option>
+                    <option value="sales_agent" @selected(old('role') === 'sales_agent')>Sales Agent</option>
                 </select>
+                <small class="text-muted">
+                    Sales Agent: links to the existing "Sales Advisor" record matching this user's name,
+                    so they can see their historical handed-off students.
+                </small>
             </div>
 
             <button type="submit" class="btn btn-primary">Create User</button>

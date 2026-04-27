@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -32,6 +33,13 @@ class Student extends Model
         'reduced_entry_reviewed_by', 'reduced_entry_reviewed_at', 'reduced_entry_review_notes',
         'original_product_type', 'original_course', 'original_university', 'original_intake', 'original_sales_price',
         'reapplication_count', 'last_reapplied_at',
+        // Sales pipeline (prototype)
+        'sales_stage', 'assigned_sales_agent_id',
+        'primeiro_nome', 'sobrenome', 'nome_social',
+        'temperature', 'lead_quality',
+        'objection_reason', 'meeting_date',
+        'handed_off_at', 'handed_off_by',
+        'is_reapplication', 'current_journey_cycle',
     ];
 
     protected $casts = [
@@ -55,11 +63,48 @@ class Student extends Model
         'original_sales_price'          => 'decimal:2',
         'reapplication_count'           => 'int',
         'last_reapplied_at'             => 'datetime',
+        // Sales pipeline (prototype)
+        'meeting_date'                  => 'datetime',
+        'handed_off_at'                 => 'datetime',
+        'is_reapplication'              => 'boolean',
+        'lead_quality'                  => 'int',
+        'current_journey_cycle'         => 'int',
     ];
+
+    /**
+     * Pipeline isolation guard. Sales-leads (rows where sales_stage IS NOT NULL)
+     * are invisible to every Eloquent query against Student by default. Sales code
+     * opts in via the salesLeadsOnly() local scope.
+     *
+     * Why a global scope: ~25+ existing queries across CS / Admin / Apps / Jobs /
+     * Webhook / Extension would otherwise leak sales-leads. Centralising the guard
+     * here means the prototype is fail-safe by default — no per-query discipline,
+     * no opt-outs needed in any existing file.
+     */
+    protected static function booted(): void
+    {
+        static::addGlobalScope('exclude_sales_leads', function (Builder $q) {
+            $q->whereNull('sales_stage');
+        });
+    }
+
+    /**
+     * Sales code opts in: only rows that ARE sales-leads.
+     */
+    public function scopeSalesLeadsOnly(Builder $q): Builder
+    {
+        return $q->withoutGlobalScope('exclude_sales_leads')
+                 ->whereNotNull('sales_stage');
+    }
 
     public function hasReapplied(): bool
     {
         return (int) $this->reapplication_count > 0;
+    }
+
+    public function isHandedOff(): bool
+    {
+        return $this->handed_off_at !== null;
     }
 
     public function scopeReapplied($q)
@@ -75,6 +120,16 @@ class Student extends Model
     public function assignedAgent()
     {
         return $this->belongsTo(User::class, 'assigned_cs_agent_id');
+    }
+
+    public function assignedSalesAgent()
+    {
+        return $this->belongsTo(User::class, 'assigned_sales_agent_id');
+    }
+
+    public function handedOffBy()
+    {
+        return $this->belongsTo(User::class, 'handed_off_by');
     }
 
     public function stageLogs()
@@ -159,6 +214,33 @@ class Student extends Model
             'cancelled',
             'concluded',
         ];
+    }
+
+    public static function allSalesStages(): array
+    {
+        return [
+            'cadastro',
+            'primeiro_contato',
+            'qualificado',
+            'apresentacao',
+            'acompanhamento',
+            'negociacao',
+            'fechamento',
+        ];
+    }
+
+    public static function salesStageLabel(string $stage): string
+    {
+        return match($stage) {
+            'cadastro'         => 'Cadastro',
+            'primeiro_contato' => 'Primeiro Contato',
+            'qualificado'      => 'Qualificado',
+            'apresentacao'     => 'Apresentação',
+            'acompanhamento'   => 'Acompanhamento',
+            'negociacao'       => 'Negociação',
+            'fechamento'       => 'Fechamento',
+            default            => ucfirst(str_replace('_', ' ', $stage)),
+        };
     }
 
     public static function allApplicationStatuses(): array

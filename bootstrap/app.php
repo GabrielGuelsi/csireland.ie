@@ -25,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin' => \App\Http\Middleware\EnsureAdmin::class,
             'admin_or_application' => \App\Http\Middleware\EnsureAdminOrApplication::class,
             'cs_agent' => \App\Http\Middleware\EnsureCsAgent::class,
+            'sales_or_admin' => \App\Http\Middleware\EnsureSalesOrAdmin::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -29,6 +29,8 @@ use App\Http\Controllers\My\ServiceRequestController as MyServiceRequestControll
 use App\Http\Controllers\My\NotificationController as MyNotificationController;
 use App\Http\Controllers\My\StudentController as MyStudentController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Sales\DashboardController as SalesDashboardController;
+use App\Http\Controllers\Sales\KanbanController as SalesKanbanController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -161,6 +163,29 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::post('/locale', [\App\Http\Controllers\LocaleController::class, 'update'])->name('locale.update');
+});
+
+// Sales pipeline portal — sales agents + admins
+Route::middleware(['auth', 'sales_or_admin'])->prefix('sales')->name('sales.')->group(function () {
+    Route::get('/',       [SalesDashboardController::class, 'index'])->name('dashboard');
+    Route::get('kanban',  [SalesKanbanController::class, 'index'])->name('kanban');
+
+    // Lead CRUD
+    Route::get('leads/create',                        [SalesKanbanController::class, 'create'])->name('leads.create');
+    Route::get('leads/ongoing',                       [SalesKanbanController::class, 'ongoing'])->name('leads.ongoing');
+    Route::post('leads',                              [SalesKanbanController::class, 'store'])->name('leads.store');
+    Route::get('leads/{student}',                     [SalesKanbanController::class, 'show'])->name('leads.show');
+    Route::get('leads/{student}/edit',                [SalesKanbanController::class, 'edit'])->name('leads.edit');
+    Route::match(['PUT', 'PATCH'], 'leads/{student}', [SalesKanbanController::class, 'update'])->name('leads.update');
+
+    // Lead actions
+    Route::patch('leads/{student}/stage',       [SalesKanbanController::class, 'updateStage'])->name('leads.updateStage');
+    Route::patch('leads/{student}/temperature', [SalesKanbanController::class, 'updateTemperature'])->name('leads.updateTemperature');
+    Route::patch('leads/{student}/followup',    [SalesKanbanController::class, 'updateFollowup'])->name('leads.updateFollowup');
+    Route::post('leads/{student}/notes',        [SalesKanbanController::class, 'storeNote'])->name('leads.storeNote');
+
+    // Handoff to CS
+    Route::post('leads/{student}/handoff',      [SalesKanbanController::class, 'handoff'])->name('leads.handoff');
 });
 
 // CS agent portal — own students only (admins allowed for preview)

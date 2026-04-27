@@ -56,6 +56,7 @@ class ServiceRequestController extends Controller
 
             if (in_array($reasonCode, ['concluded_previously', 'cancelled_previously'], true) && $email) {
                 $pastCycles = Student::withTrashed()
+                    ->whereNull('sales_stage')
                     ->where('email', $email)
                     ->where('id', '!=', $serviceRequest->student_id)
                     ->whereIn('status', ['concluded', 'cancelled'])
@@ -67,6 +68,7 @@ class ServiceRequestController extends Controller
 
             if ($reasonCode === 'duplicate' && !empty($data['original_student_id'])) {
                 $originalStudent = Student::withTrashed()
+                    ->whereNull('sales_stage')
                     ->with('assignedAgent:id,name')
                     ->find($data['original_student_id']);
             }

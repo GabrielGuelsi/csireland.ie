@@ -76,9 +76,39 @@ class KanbanController extends Controller
             });
         }
 
-        $leads = $query->orderByDesc('created_at')->get();
+        // Search across name / email / whatsapp_phone (LIKE).
+        if ($request->filled('search')) {
+            $term = $request->input('search');
+            $query->where(function ($q) use ($term) {
+                $q->where('name', 'like', "%{$term}%")
+                  ->orWhere('email', 'like', "%{$term}%")
+                  ->orWhere('whatsapp_phone', 'like', "%{$term}%");
+            });
+        }
+
+        $leads = $query->orderByDesc('created_at')->paginate(25)->withQueryString();
 
         return view('sales.ongoing', compact('leads', 'isAdmin'));
+    }
+
+    // ── Read-only student detail (handed-off + historical) ──────────────────
+    // Sales agents drill in to a student in their book to see CS status,
+    // application status, and stage history. Pure observation — zero edit
+    // affordances. CS drives the pipeline; sales just watches.
+
+    public function showStudent(Request $request, Student $student)
+    {
+        $this->authorizeStudentVisibility($request, $student);
+
+        $student->load([
+            'assignedAgent:id,name',
+            'salesConsultant:id,name,user_id',
+            'handedOffBy:id,name',
+            'stageLogs.changedBy:id,name',
+            'notes.author:id,name',
+        ]);
+
+        return view('sales.student-show', compact('student'));
     }
 
     // ── Lead detail ──────────────────────────────────────────────────────────
@@ -342,6 +372,27 @@ class KanbanController extends Controller
     {
         if (! $request->user()->isAdmin()
             && $student->assigned_sales_agent_id !== $request->user()->id) {
+            abort(403);
+        }
+    }
+
+    /**
+     * Read-only visibility for a CS student in the sales agent's book.
+     * Allowed if the student was handed off by this user OR is linked through
+     * the user's SalesConsultant. Admins always allowed.
+     */
+    private function authorizeStudentVisibility(Request $request, Student $student): void
+    {
+        $user = $request->user();
+        if ($user->isAdmin()) {
+            return;
+        }
+
+        $ownsViaHandoff    = $student->handed_off_by === $user->id;
+        $ownsViaConsultant = $student->salesConsultant
+            && $student->salesConsultant->user_id === $user->id;
+
+        if (!$ownsViaHandoff && !$ownsViaConsultant) {
             abort(403);
         }
     }

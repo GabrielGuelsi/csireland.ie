@@ -272,6 +272,74 @@ class SalesLeadIsolationTest extends TestCase
         $this->assertSame($user->id, $newConsultant->fresh()->user_id, 'New link must be set.');
     }
 
+    public function test_ongoing_search_filters_by_name(): void
+    {
+        /** @var User $romario */
+        $romario = User::factory()->create(['role' => 'sales_agent', 'name' => 'Romario', 'active' => true]);
+        $consultant = SalesConsultant::create(['name' => 'Romario', 'user_id' => $romario->id]);
+
+        Student::create([
+            'name' => 'Joao da Silva', 'email' => 'joao@iso.invalid',
+            'whatsapp_phone' => '+353800002001', 'product_type' => 'higher_education',
+            'status' => 'waiting_initial_documents', 'sales_consultant_id' => $consultant->id,
+            'assigned_cs_agent_id' => $this->csAgent->id, 'form_submitted_at' => now()->subMonth(), 'source' => 'form',
+        ]);
+        Student::create([
+            'name' => 'Maria Souza', 'email' => 'maria@iso.invalid',
+            'whatsapp_phone' => '+353800002002', 'product_type' => 'higher_education',
+            'status' => 'waiting_initial_documents', 'sales_consultant_id' => $consultant->id,
+            'assigned_cs_agent_id' => $this->csAgent->id, 'form_submitted_at' => now()->subMonth(), 'source' => 'form',
+        ]);
+
+        $resp = $this->actingAs($romario)->get(route('sales.leads.ongoing', ['search' => 'Joao']));
+        $resp->assertOk();
+        $resp->assertSee('Joao da Silva');
+        $resp->assertDontSee('Maria Souza');
+    }
+
+    public function test_sales_agent_can_view_their_student_detail(): void
+    {
+        /** @var User $romario */
+        $romario = User::factory()->create(['role' => 'sales_agent', 'name' => 'Romario', 'active' => true]);
+        $consultant = SalesConsultant::create(['name' => 'Romario', 'user_id' => $romario->id]);
+
+        $student = Student::create([
+            'name' => 'View Me', 'email' => 'viewme@iso.invalid',
+            'whatsapp_phone' => '+353800002003', 'product_type' => 'higher_education',
+            'status' => 'waiting_offer_letter', 'application_status' => 'in_review',
+            'sales_consultant_id' => $consultant->id, 'assigned_cs_agent_id' => $this->csAgent->id,
+            'form_submitted_at' => now()->subMonth(), 'source' => 'form',
+        ]);
+
+        $resp = $this->actingAs($romario)->get(route('sales.students.show', $student));
+        $resp->assertOk();
+        $resp->assertSee('View Me');
+        $resp->assertSee('Waiting for Offer Letter');  // CS status label
+        $resp->assertSee('In Review');                  // Application status label
+        // Read-only check: no edit forms (which would have method="POST" + a save button)
+        $resp->assertDontSee('Save Changes', false);
+    }
+
+    public function test_sales_agent_cannot_view_other_agents_student(): void
+    {
+        /** @var User $romario */
+        $romario = User::factory()->create(['role' => 'sales_agent', 'name' => 'Romario', 'active' => true]);
+        /** @var User $maria */
+        $maria   = User::factory()->create(['role' => 'sales_agent', 'name' => 'Maria',   'active' => true]);
+        $mariaConsultant = SalesConsultant::create(['name' => 'Maria', 'user_id' => $maria->id]);
+
+        $mariasStudent = Student::create([
+            'name' => 'Marias Student', 'email' => 'mariasstudent@iso.invalid',
+            'whatsapp_phone' => '+353800002004', 'product_type' => 'higher_education',
+            'status' => 'waiting_initial_documents', 'sales_consultant_id' => $mariaConsultant->id,
+            'assigned_cs_agent_id' => $this->csAgent->id, 'form_submitted_at' => now()->subMonth(), 'source' => 'form',
+        ]);
+
+        // Romario tries to URL-tamper to view Maria's student.
+        $resp = $this->actingAs($romario)->get(route('sales.students.show', $mariasStudent));
+        $resp->assertStatus(403);
+    }
+
     public function test_with_trashed_and_only_trashed_still_exclude_sales_leads(): void
     {
         // Soft-delete the lead so it would appear in trashed queries if the scope failed.

@@ -186,6 +186,9 @@ Route::middleware(['auth', 'sales_or_admin'])->prefix('sales')->name('sales.')->
 
     // Handoff to CS
     Route::post('leads/{student}/handoff',      [SalesKanbanController::class, 'handoff'])->name('leads.handoff');
+
+    // Read-only CS-student detail (handed-off + historical book)
+    Route::get('students/{student}',            [SalesKanbanController::class, 'showStudent'])->name('students.show');
 });
 
 // CS agent portal — own students only (admins allowed for preview)

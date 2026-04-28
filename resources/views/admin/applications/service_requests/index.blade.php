@@ -50,6 +50,7 @@
                 <tr>
                     <th>#</th>
                     <th>Student</th>
+                    <th>College</th>
                     <th>Requested by</th>
                     <th>Status</th>
                     <th>Date</th>
@@ -61,6 +62,7 @@
                 <tr>
                     <td>{{ $r->id }}</td>
                     <td>{{ $r->student?->name ?? '—' }}</td>
+                    <td>{{ $r->student?->university ?? '—' }}</td>
                     <td>{{ $r->requester?->name ?? '—' }}</td>
                     <td>
                         @php
@@ -82,7 +84,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="6" class="text-center text-muted">No requests found.</td></tr>
+                <tr><td colspan="7" class="text-center text-muted">No requests found.</td></tr>
                 @endforelse
             </tbody>
         </table>

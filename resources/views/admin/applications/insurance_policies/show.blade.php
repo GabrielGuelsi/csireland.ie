@@ -88,8 +88,10 @@
                         <label>Status</label>
                         <select name="status" class="form-control">
                             <option value="{{ $policy->status }}">{{ $statusLabels[$policy->status] ?? $policy->status }} (atual)</option>
-                            @foreach($nextStatuses as $next)
-                            <option value="{{ $next }}">→ {{ $statusLabels[$next] ?? $next }}</option>
+                            @foreach($statusLabels as $code => $label)
+                                @if($code !== $policy->status)
+                                <option value="{{ $code }}">{{ $label }}</option>
+                                @endif
                             @endforeach
                         </select>
                     </div>

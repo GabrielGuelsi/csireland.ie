@@ -66,12 +66,6 @@ class InsurancePolicyController extends Controller
             'approval_notes' => 'nullable|string|max:2000',
         ]);
 
-        if (!empty($data['status']) && $data['status'] !== $policy->status) {
-            if (!$policy->canTransitionTo($data['status'])) {
-                return back()->withErrors(['status' => 'Invalid status transition.']);
-            }
-        }
-
         $policy->update(array_filter($data, fn($v) => $v !== null));
 
         return redirect()

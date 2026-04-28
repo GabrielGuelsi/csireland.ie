@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Models\InsurancePolicy;
 use App\Models\ServiceRequest;
 use App\Models\Student;
 use Illuminate\Support\Facades\Auth;
@@ -35,6 +36,8 @@ class DecorateApplicationsMenu
                     ->count(),
                 'apps_cancellations' => ServiceRequest::where('type', 'cancellation')
                     ->whereNotIn('status', ['completed'])
+                    ->count(),
+                'apps_insurance_policies' => InsurancePolicy::whereIn('status', ['awaiting_payment', 'pending'])
                     ->count(),
                 'apps_special_approvals' => Student::query()
                     ->where(function ($q) {

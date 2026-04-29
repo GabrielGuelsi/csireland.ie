@@ -26,6 +26,7 @@ class InsurancePolicyController extends Controller
             'type'           => $p->type,
             'source'         => $p->source,
             'status'         => $p->status,
+            'is_bonificado'  => $p->isBonificado(),
             'price_cents'    => $p->price_cents,
             'cost_cents'     => $p->cost_cents,
             'approver'       => $p->approver?->name,

@@ -134,7 +134,7 @@ class SpecialApprovalController extends Controller
                 'student_id'     => $student->id,
                 'type'           => $policyType,
                 'source'         => 'admin',
-                'status'         => 'pending',
+                'status'         => 'in_student_process',
                 'price_cents'    => $policyType === 'gov_free' ? 0 : (int) round($defaultPrice / 2),
                 'cost_cents'     => $defaultCost,
                 'approved_by'    => $approverId,

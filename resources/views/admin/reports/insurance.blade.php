@@ -20,12 +20,15 @@
     </div>
 </div>
 
+@php $moneyFootnote = "Exclui apólices em 'Aluno em processo' (ainda não solicitadas pelo CS)."; @endphp
+
 <div class="row">
     <div class="col-md-4">
         <div class="small-box bg-success">
             <div class="inner">
                 <h3>€{{ number_format($revenueCents/100, 2, ',', '.') }}</h3>
                 <p>Faturamento total</p>
+                <small class="text-white-50">{{ $moneyFootnote }}</small>
             </div>
         </div>
     </div>
@@ -34,6 +37,7 @@
             <div class="inner">
                 <h3>€{{ number_format($totalCostCents/100, 2, ',', '.') }}</h3>
                 <p>Custo total</p>
+                <small class="text-white-50">{{ $moneyFootnote }}</small>
             </div>
         </div>
     </div>
@@ -42,6 +46,7 @@
             <div class="inner">
                 <h3>€{{ number_format($profitCents/100, 2, ',', '.') }}</h3>
                 <p>Lucro líquido (geral)</p>
+                <small class="text-white-50">{{ $moneyFootnote }}</small>
             </div>
         </div>
     </div>
@@ -61,6 +66,7 @@
             <div class="inner">
                 <h3>€{{ number_format($bonificadoCostCents/100, 2, ',', '.') }}</h3>
                 <p>Gasto em bonificados</p>
+                <small class="text-white-50">{{ $moneyFootnote }}</small>
             </div>
         </div>
     </div>
@@ -71,6 +77,35 @@
                 <p>Não vinculados</p>
             </div>
         </div>
+    </div>
+</div>
+
+<div class="card card-outline card-info">
+    <div class="card-header py-2">
+        <h3 class="card-title mb-0">
+            Bonificados aprovados neste mês — <strong>{{ $bonificadoApprovedTotal }}</strong>
+        </h3>
+        <div class="card-tools">
+            <small class="text-muted">A contagem permanece a mesma conforme o status avança. "Aluno em processo" significa aprovado, mas ainda não solicitado pelo CS.</small>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+            <thead>
+                <tr>
+                    @foreach(['in_student_process','pending','issued','received','sent_to_cs'] as $code)
+                        <th class="text-center">{{ $statusLabels[$code] ?? $code }}</th>
+                    @endforeach
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    @foreach(['in_student_process','pending','issued','received','sent_to_cs'] as $code)
+                        <td class="text-center"><strong>{{ $bonificadoApprovedByStatus[$code] ?? 0 }}</strong></td>
+                    @endforeach
+                </tr>
+            </tbody>
+        </table>
     </div>
 </div>
 

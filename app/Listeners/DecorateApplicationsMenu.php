@@ -37,7 +37,14 @@ class DecorateApplicationsMenu
                 'apps_cancellations' => ServiceRequest::where('type', 'cancellation')
                     ->whereNotIn('status', ['completed'])
                     ->count(),
+                // Operational badge: only count policies that are actionable NOW.
+                // `in_student_process` (bonificado approved but student still in journey)
+                // is intentionally excluded — those move to `pending` only when the CS
+                // agent fires the in-app insurance request, at which point they appear here.
                 'apps_insurance_policies' => InsurancePolicy::whereIn('status', ['awaiting_payment', 'pending'])
+                    ->count(),
+                'apps_insurance_requests' => ServiceRequest::where('type', 'insurance')
+                    ->whereNotIn('status', ['completed'])
                     ->count(),
                 'apps_special_approvals' => Student::query()
                     ->where(function ($q) {

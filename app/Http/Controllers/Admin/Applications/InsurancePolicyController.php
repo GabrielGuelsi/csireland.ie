@@ -60,7 +60,7 @@ class InsurancePolicyController extends Controller
         abort_unless($request->user()->isAdmin(), 403);
 
         $data = $request->validate([
-            'status'      => 'nullable|string|in:awaiting_payment,pending,issued,received,sent_to_cs',
+            'status'      => 'nullable|string|in:awaiting_payment,in_student_process,pending,issued,received,sent_to_cs',
             'price_cents' => 'nullable|integer|min:0',
             'cost_cents'  => 'nullable|integer|min:0',
             'approval_notes' => 'nullable|string|max:2000',

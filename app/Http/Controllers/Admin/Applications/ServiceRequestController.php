@@ -17,6 +17,7 @@ class ServiceRequestController extends Controller
     public function refunds(Request $request)       { return $this->index($request, 'refund'); }
     public function cancellations(Request $request)  { return $this->index($request, 'cancellation'); }
     public function removals(Request $request)       { return $this->index($request, 'removal'); }
+    public function insurance(Request $request)      { return $this->index($request, 'insurance'); }
 
     private function index(Request $request, string $type)
     {
@@ -30,14 +31,37 @@ class ServiceRequestController extends Controller
             );
         }
 
+        $openSet = ServiceRequest::OPEN_STATUSES[$type] ?? null;
+        $view    = $request->input('view', 'open'); // open | closed | all
+
+        if ($openSet && !$request->filled('status')) {
+            if ($view === 'open') {
+                $query->whereIn('status', $openSet);
+            } elseif ($view === 'closed') {
+                $query->whereNotIn('status', $openSet);
+            }
+        }
+
         if ($status = $request->input('status')) {
             $query->where('status', $status);
+        }
+
+        $counts = null;
+        if ($openSet) {
+            $base   = ServiceRequest::where('type', $type);
+            $counts = [
+                'open'   => (clone $base)->whereIn('status', $openSet)->count(),
+                'closed' => (clone $base)->whereNotIn('status', $openSet)->count(),
+                'all'    => (clone $base)->count(),
+            ];
         }
 
         $requests = $query->paginate(30)->withQueryString();
         $statuses = ServiceRequest::STATUSES[$type];
 
-        return view('admin.applications.service_requests.index', compact('requests', 'type', 'search', 'status', 'statuses'));
+        return view('admin.applications.service_requests.index', compact(
+            'requests', 'type', 'search', 'status', 'statuses', 'view', 'counts'
+        ));
     }
 
     public function show(ServiceRequest $serviceRequest)

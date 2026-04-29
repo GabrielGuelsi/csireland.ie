@@ -436,6 +436,13 @@ return [
             'can'   => 'access-admin',
         ],
         [
+            'key'   => 'apps_insurance_requests',
+            'text'  => 'Insurance Requests',
+            'route' => 'admin.applications.service-requests.insurance',
+            'icon'  => 'fas fa-fw fa-shield-virus',
+            'can'   => 'access-admin',
+        ],
+        [
             'key'   => 'apps_reapplications',
             'text'  => 'Reapplications',
             'route' => 'admin.applications.reapplications.index',

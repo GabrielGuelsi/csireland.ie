@@ -20,13 +20,31 @@
         'refund'        => 'admin.applications.service-requests.refunds',
         'cancellation'  => 'admin.applications.service-requests.cancellations',
         'removal'       => 'admin.applications.service-requests.removals',
+        'insurance'     => 'admin.applications.service-requests.insurance',
     };
 @endphp
+
+{{-- Open / Closed / All tabs (only for types with a defined open-set) --}}
+@if($counts)
+<ul class="nav nav-tabs mb-3">
+    @foreach(['open' => 'Open', 'closed' => 'Closed', 'all' => 'All'] as $key => $label)
+    <li class="nav-item">
+        <a class="nav-link {{ ($view ?? 'open') === $key ? 'active' : '' }}"
+           href="{{ route($routeName, ['view' => $key] + array_filter(['q' => $search])) }}">
+            {{ $label }} <span class="badge badge-light ml-1">{{ $counts[$key] }}</span>
+        </a>
+    </li>
+    @endforeach
+</ul>
+@endif
 
 {{-- Filters --}}
 <div class="card card-outline card-primary">
     <div class="card-header py-2">
         <form method="GET" action="{{ route($routeName) }}" class="form-inline">
+            @if($counts)
+            <input type="hidden" name="view" value="{{ $view ?? 'open' }}">
+            @endif
             <input type="text" name="q" class="form-control form-control-sm mr-2" placeholder="Search student name…" value="{{ $search ?? '' }}">
             <select name="status" class="form-control form-control-sm mr-2">
                 <option value="">All statuses</option>
@@ -37,7 +55,7 @@
                 @endforeach
             </select>
             <button type="submit" class="btn btn-sm btn-primary mr-1">Filter</button>
-            <a href="{{ route($routeName) }}" class="btn btn-sm btn-default">Clear</a>
+            <a href="{{ $counts ? route($routeName, ['view' => 'open']) : route($routeName) }}" class="btn btn-sm btn-default">Clear</a>
         </form>
     </div>
 </div>

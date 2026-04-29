@@ -510,24 +510,42 @@ class ReportController extends Controller
 
         $scope = InsurancePolicy::inMonth($year, $month);
 
+        // Policies in `in_student_process` are bonificado approvals that the CS team
+        // has not yet promoted into the operational pipeline. Cost / revenue is not
+        // "real" until they advance past this gate, so the money cards exclude them.
+        // Counts and breakdowns still include all statuses (see Bonificado approved card below).
+        $moneyScope = (clone $scope)->where('status', '!=', 'in_student_process');
+
         $countsByType = (clone $scope)->selectRaw('type, COUNT(*) as c')
             ->groupBy('type')->pluck('c', 'type')->toArray();
 
         $countsByStatus = (clone $scope)->selectRaw('status, COUNT(*) as c')
             ->groupBy('status')->pluck('c', 'status')->toArray();
 
-        // Overall aggregates — every policy contributes price AND cost.
-        $revenueCents   = (int) (clone $scope)->sum('price_cents');
-        $totalCostCents = (int) (clone $scope)->sum('cost_cents');
+        // Overall aggregates — exclude in_student_process so finance numbers
+        // reflect realized-or-committed cost, not pre-commitment commitments.
+        $revenueCents   = (int) (clone $moneyScope)->sum('price_cents');
+        $totalCostCents = (int) (clone $moneyScope)->sum('cost_cents');
         $profitCents    = $revenueCents - $totalCostCents;
 
         // Breakdown: profit from paid policies only (excludes bonificados).
-        $paidRevenueCents = (int) (clone $scope)->paid()->sum('price_cents');
-        $paidCostCents    = (int) (clone $scope)->paid()->sum('cost_cents');
+        // Filter applied for symmetry — paid policies never have in_student_process anyway.
+        $paidRevenueCents = (int) (clone $moneyScope)->paid()->sum('price_cents');
+        $paidCostCents    = (int) (clone $moneyScope)->paid()->sum('cost_cents');
         $paidProfitCents  = $paidRevenueCents - $paidCostCents;
 
         // Breakdown: what the company "spent" giving free/discounted insurance away.
-        $bonificadoCostCents = (int) (clone $scope)->bonificado()->sum('cost_cents');
+        $bonificadoCostCents = (int) (clone $moneyScope)->bonificado()->sum('cost_cents');
+
+        // Bonificados approved this month, broken down by current status —
+        // locks in the "how many were given this month" metric regardless of
+        // where in the lifecycle each policy currently sits.
+        $bonificadoApprovedByStatus = (clone $scope)->bonificado()
+            ->selectRaw('status, COUNT(*) as c')
+            ->groupBy('status')
+            ->pluck('c', 'status')
+            ->toArray();
+        $bonificadoApprovedTotal = array_sum($bonificadoApprovedByStatus);
 
         $unmatched = (clone $scope)->unmatched()->count();
 
@@ -547,6 +565,8 @@ class ReportController extends Controller
             'profitCents'         => $profitCents,
             'paidProfitCents'     => $paidProfitCents,
             'bonificadoCostCents' => $bonificadoCostCents,
+            'bonificadoApprovedTotal'    => $bonificadoApprovedTotal,
+            'bonificadoApprovedByStatus' => $bonificadoApprovedByStatus,
             'unmatched'           => $unmatched,
             'policies'            => $policies,
             'statusLabels'        => InsurancePolicy::statusLabels('pt_BR'),

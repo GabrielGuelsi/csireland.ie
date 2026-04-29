@@ -81,12 +81,13 @@
                     <td>
                         @php
                             $statusBadge = match($p->status) {
-                                'awaiting_payment' => 'warning',
-                                'pending'          => 'info',
-                                'issued'           => 'primary',
-                                'received'         => 'secondary',
-                                'sent_to_cs'       => 'success',
-                                default            => 'light',
+                                'awaiting_payment'   => 'warning',
+                                'in_student_process' => 'warning',
+                                'pending'            => 'info',
+                                'issued'             => 'primary',
+                                'received'           => 'secondary',
+                                'sent_to_cs'         => 'success',
+                                default              => 'light',
                             };
                         @endphp
                         <span class="badge badge-{{ $statusBadge }}">{{ $statusLabels[$p->status] ?? $p->status }}</span>

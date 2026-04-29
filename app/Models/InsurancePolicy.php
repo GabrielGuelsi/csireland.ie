@@ -58,6 +58,11 @@ class InsurancePolicy extends Model
         return $q->where('status', 'pending');
     }
 
+    public function scopeInStudentProcess(Builder $q): Builder
+    {
+        return $q->where('status', 'in_student_process');
+    }
+
     public function scopeIssued(Builder $q): Builder
     {
         return $q->where('status', 'issued');
@@ -90,17 +95,19 @@ class InsurancePolicy extends Model
     public static function statusLabels(string $locale = 'en'): array
     {
         return $locale === 'pt_BR' ? [
-            'awaiting_payment' => 'Aguardando Pagamento',
-            'pending'          => 'Pendente',
-            'issued'           => 'Emitido',
-            'received'         => 'Recebido',
-            'sent_to_cs'       => 'Enviado para o CS',
+            'awaiting_payment'   => 'Aguardando Pagamento',
+            'in_student_process' => 'Aluno em processo',
+            'pending'            => 'Pendente',
+            'issued'             => 'Emitido',
+            'received'           => 'Recebido',
+            'sent_to_cs'         => 'Enviado para o CS',
         ] : [
-            'awaiting_payment' => 'Awaiting Payment',
-            'pending'          => 'Pending',
-            'issued'           => 'Issued',
-            'received'         => 'Received',
-            'sent_to_cs'       => 'Sent to CS',
+            'awaiting_payment'   => 'Awaiting Payment',
+            'in_student_process' => 'Student in process',
+            'pending'            => 'Pending',
+            'issued'             => 'Issued',
+            'received'           => 'Received',
+            'sent_to_cs'         => 'Sent to CS',
         ];
     }
 
@@ -143,12 +150,13 @@ class InsurancePolicy extends Model
     public static function allowedTransitions(string $from): array
     {
         return match ($from) {
-            'awaiting_payment' => ['pending'],
-            'pending'          => ['issued'],
-            'issued'           => ['received'],
-            'received'         => ['sent_to_cs'],
-            'sent_to_cs'       => [],
-            default            => [],
+            'awaiting_payment'   => ['pending'],
+            'in_student_process' => ['pending'],
+            'pending'            => ['issued', 'in_student_process'],
+            'issued'             => ['received'],
+            'received'           => ['sent_to_cs'],
+            'sent_to_cs'         => [],
+            default              => [],
         };
     }
 

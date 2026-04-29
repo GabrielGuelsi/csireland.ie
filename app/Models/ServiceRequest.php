@@ -24,13 +24,22 @@ class ServiceRequest extends Model
 
     // ── Types & statuses ─────────────────────────────────────────────────────
 
-    public const TYPES = ['documentation', 'refund', 'cancellation', 'removal'];
+    public const TYPES = ['documentation', 'refund', 'cancellation', 'removal', 'insurance'];
 
     public const STATUSES = [
         'documentation' => ['pending', 'scheduled', 'completed'],
         'refund'        => ['pending', 'in_review', 'approved', 'completed', 'rejected'],
         'cancellation'  => ['pending', 'in_review', 'completed'],
         'removal'       => ['pending', 'in_review', 'completed', 'rejected'],
+        'insurance'     => ['pending', 'completed'],
+    ];
+
+    // Statuses considered "open" (still need work). Lists with an entry here
+    // default to showing only open requests; types absent show all statuses.
+    public const OPEN_STATUSES = [
+        'documentation' => ['pending', 'scheduled'],
+        'refund'        => ['pending', 'in_review', 'approved'],
+        'cancellation'  => ['pending', 'in_review'],
     ];
 
     public const TYPE_LABELS = [
@@ -38,6 +47,7 @@ class ServiceRequest extends Model
         'refund'        => 'Refund',
         'cancellation'  => 'Cancellation',
         'removal'       => 'Removal Request',
+        'insurance'     => 'Insurance Request',
     ];
 
     public const STATUS_LABELS = [
@@ -65,6 +75,7 @@ class ServiceRequest extends Model
             'refund'        => "[{$label}] submitted by {$agentName}. Reason: {$data['reason']}. Amount: €" . number_format($data['refund_amount'] ?? 0, 2) . ".",
             'cancellation'  => "[{$label}] submitted by {$agentName}. Reason: {$data['reason']}.",
             'removal'       => "[{$label}] submitted by {$agentName}. Reason: " . ($data['reason_code'] ?? 'unknown') . ".",
+            'insurance'     => "[{$label}] submitted by {$agentName}.",
             default         => "[{$label}] submitted by {$agentName}.",
         };
     }

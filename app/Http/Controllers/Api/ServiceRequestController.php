@@ -3,12 +3,16 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\InsurancePolicy;
+use App\Models\Notification;
 use App\Models\ServiceRequest;
 use App\Models\ServiceRequestAttachment;
 use App\Models\Student;
 use App\Models\StudentChat;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class ServiceRequestController extends Controller
@@ -18,7 +22,7 @@ class ServiceRequestController extends Controller
     {
         $request->validate([
             'student_id' => 'required|exists:students,id',
-            'type'       => 'required|in:documentation,refund,cancellation,removal',
+            'type'       => 'required|in:documentation,refund,cancellation,removal,insurance',
         ]);
 
         $student = Student::findOrFail($request->student_id);
@@ -53,6 +57,9 @@ class ServiceRequestController extends Controller
                 'data.original_student_id' => 'required_if:data.reason_code,duplicate|nullable|integer|exists:students,id',
                 'data.reason_note'         => 'required_if:data.reason_code,other|nullable|string|max:2000',
             ],
+            'insurance' => [
+                'data.policy_id' => 'required|integer|exists:insurance_policies,id',
+            ],
         };
 
         // Attachment validation (cancellation only)
@@ -63,43 +70,79 @@ class ServiceRequestController extends Controller
 
         $request->validate($dataRules);
 
-        $sr = ServiceRequest::create([
-            'type'         => $request->type,
-            'status'       => 'pending',
-            'student_id'   => $student->id,
-            'requested_by' => $request->user()->id,
-            'data'         => $request->input('data'),
-        ]);
+        $sr = DB::transaction(function () use ($request, $student) {
+            $sr = ServiceRequest::create([
+                'type'         => $request->type,
+                'status'       => 'pending',
+                'student_id'   => $student->id,
+                'requested_by' => $request->user()->id,
+                'data'         => $request->input('data'),
+            ]);
 
-        // Store attachments (cancellation only)
-        if ($request->type === 'cancellation' && $request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $ext  = $file->getClientOriginalExtension();
-                $name = Str::uuid() . '.' . $ext;
-                $path = "service-requests/{$sr->id}/{$name}";
+            // Store attachments (cancellation only)
+            if ($request->type === 'cancellation' && $request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $file) {
+                    $ext  = $file->getClientOriginalExtension();
+                    $name = Str::uuid() . '.' . $ext;
+                    $path = "service-requests/{$sr->id}/{$name}";
 
-                Storage::disk('local')->putFileAs(
-                    "service-requests/{$sr->id}",
-                    $file,
-                    $name
-                );
+                    Storage::disk('local')->putFileAs(
+                        "service-requests/{$sr->id}",
+                        $file,
+                        $name
+                    );
 
-                ServiceRequestAttachment::create([
-                    'service_request_id' => $sr->id,
-                    'original_name'      => $file->getClientOriginalName(),
-                    'stored_path'        => $path,
-                    'mime_type'          => $file->getMimeType(),
-                    'size'               => $file->getSize(),
-                ]);
+                    ServiceRequestAttachment::create([
+                        'service_request_id' => $sr->id,
+                        'original_name'      => $file->getClientOriginalName(),
+                        'stored_path'        => $path,
+                        'mime_type'          => $file->getMimeType(),
+                        'size'               => $file->getSize(),
+                    ]);
+                }
             }
-        }
 
-        StudentChat::create([
-            'student_id'  => $student->id,
-            'author_id'   => $request->user()->id,
-            'author_role' => $request->user()->role ?? 'cs_agent',
-            'body'        => ServiceRequest::buildSubmissionMessage($request->type, $request->input('data'), $request->user()->name),
-        ]);
+            // Insurance request: atomically promote the linked bonificado policy
+            // from in_student_process → pending and notify the applications team.
+            // lockForUpdate() prevents two CS agents double-clicking the button.
+            if ($request->type === 'insurance') {
+                $policy = InsurancePolicy::where('id', $request->input('data.policy_id'))
+                    ->where('student_id', $student->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                abort_unless($policy->isBonificado(), 422, 'Policy is not bonificado.');
+                abort_unless($policy->status === 'in_student_process', 409, 'Policy is not awaiting student process.');
+
+                $policy->update(['status' => 'pending']);
+
+                $applicationUserIds = User::where('role', 'application')
+                    ->where('active', true)
+                    ->pluck('id');
+
+                foreach ($applicationUserIds as $uid) {
+                    Notification::create([
+                        'user_id'    => $uid,
+                        'type'       => 'application_dispatch',
+                        'student_id' => $student->id,
+                        'data'       => [
+                            'source'    => 'insurance_request',
+                            'policy_id' => $policy->id,
+                            'cs_agent'  => $request->user()->name,
+                        ],
+                    ]);
+                }
+            }
+
+            StudentChat::create([
+                'student_id'  => $student->id,
+                'author_id'   => $request->user()->id,
+                'author_role' => $request->user()->role ?? 'cs_agent',
+                'body'        => ServiceRequest::buildSubmissionMessage($request->type, $request->input('data') ?? [], $request->user()->name),
+            ]);
+
+            return $sr;
+        });
 
         // Cancellation requests are REVIEWED by admin at /admin/applications/cancellations.
         // The student's status is NOT flipped here — the admin's "completed" action

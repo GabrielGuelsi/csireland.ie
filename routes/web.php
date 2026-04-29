@@ -67,6 +67,7 @@ Route::middleware(['auth', 'admin_or_application'])->prefix('admin')->name('admi
     Route::patch('students/{student}/reassign',          [StudentController::class, 'reassign'])->name('students.reassign');
     Route::post('students/bulk-reassign',                [StudentController::class, 'bulkReassign'])->name('students.bulkReassign');
     Route::post('students/{student}/restore',            [StudentController::class, 'restore'])->name('students.restore');
+    Route::delete('students/{student}',                  [StudentController::class, 'destroy'])->middleware('admin')->name('students.destroy');
     Route::patch('students/{student}/gift-received',     [StudentController::class, 'markGiftReceived'])->name('students.markGiftReceived');
 
     // CS Agents
@@ -125,6 +126,7 @@ Route::middleware(['auth', 'admin_or_application'])->prefix('admin')->name('admi
         Route::get('service-requests/refunds',                [AppServiceRequestController::class, 'refunds'])->name('service-requests.refunds');
         Route::get('service-requests/cancellations',          [AppServiceRequestController::class, 'cancellations'])->name('service-requests.cancellations');
         Route::get('service-requests/removals',               [AppServiceRequestController::class, 'removals'])->name('service-requests.removals');
+        Route::get('service-requests/insurance',              [AppServiceRequestController::class, 'insurance'])->name('service-requests.insurance');
         Route::get('service-requests/{serviceRequest}',       [AppServiceRequestController::class, 'show'])->name('service-requests.show');
         Route::patch('service-requests/{serviceRequest}',     [AppServiceRequestController::class, 'update'])->name('service-requests.update');
         Route::get('service-requests/attachments/{attachment}/download', [AppAttachmentController::class, 'download'])->name('service-requests.attachments.download');

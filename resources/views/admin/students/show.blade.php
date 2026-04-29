@@ -288,6 +288,24 @@ $priorityBadge = ['high' => 'danger', 'medium' => 'warning', 'low' => 'secondary
             </div>
         </div>
 
+        {{-- Remove (admin only) --}}
+        @if(auth()->user()->isAdmin())
+        <div class="card border-danger mt-3">
+            <div class="card-header"><h3 class="card-title text-danger">Danger Zone</h3></div>
+            <div class="card-body">
+                <p class="small text-muted mb-2">
+                    Removes this student from pipelines, dashboards and KPIs.
+                    Recoverable from <a href="{{ route('admin.students.removed') }}">Removed students</a>.
+                </p>
+                <form method="POST" action="{{ route('admin.students.destroy', $student) }}"
+                      onsubmit="return confirm('Remove {{ addslashes($student->name) }}? This student will stop counting in KPIs. You can restore later from the Removed list.')">
+                    @csrf @method('DELETE')
+                    <button type="submit" class="btn btn-danger btn-block">Remove Student</button>
+                </form>
+            </div>
+        </div>
+        @endif
+
     </div>
 </div>
 

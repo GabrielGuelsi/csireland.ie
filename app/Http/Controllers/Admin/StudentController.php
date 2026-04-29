@@ -237,4 +237,23 @@ class StudentController extends Controller
         return redirect()->route('admin.students.removed')
             ->with('success', "Student {$student->name} restored.");
     }
+
+    public function destroy(Request $request, Student $student)
+    {
+        // Defence-in-depth: route already has 'admin' middleware, but enforce
+        // here too so role gating survives any future route refactor.
+        abort_unless($request->user()?->isAdmin(), 403, 'Admin access required.');
+
+        $name = $student->name;
+        $student->delete();
+
+        ActivityLog::create([
+            'user_id'    => $request->user()->id,
+            'student_id' => $student->id,
+            'action'     => 'removed',
+        ]);
+
+        return redirect()->route('admin.students.index')
+            ->with('success', "Student {$name} removed. Restore from the Removed list if needed.");
+    }
 }

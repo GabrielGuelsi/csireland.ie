@@ -167,8 +167,9 @@ class Student extends Model
         return $this->hasMany(StudentChat::class)->orderBy('created_at');
     }
 
-    public static function statusLabel(string $status): string
+    public static function statusLabel(?string $status): string
     {
+        if ($status === null) return '—';
         return match($status) {
             'waiting_initial_documents' => 'Waiting for Documents (Initial)',
             'first_contact_made'        => 'First Contact Made',

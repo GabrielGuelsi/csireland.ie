@@ -542,6 +542,11 @@ return [
                     'icon'  => 'fas fa-fw fa-chart-line',
                 ],
                 [
+                    'text'  => 'Sales Funnel',
+                    'route' => 'admin.reports.sales',
+                    'icon'  => 'fas fa-fw fa-funnel-dollar',
+                ],
+                [
                     'text'  => 'Insurance',
                     'route' => 'admin.reports.insurance',
                     'icon'  => 'fas fa-fw fa-shield-alt',

@@ -32,9 +32,8 @@ class ReportController extends Controller
     public function index(Request $request)
     {
         $request->validate([
-            'from'        => 'nullable|date_format:Y-m-d',
-            'to'          => 'nullable|date_format:Y-m-d',
-            'funnel_mode' => 'nullable|in:cohort,period',
+            'from' => 'nullable|date_format:Y-m-d',
+            'to'   => 'nullable|date_format:Y-m-d',
         ]);
 
         $from = $request->input('from', now()->startOfMonth()->toDateString());
@@ -46,8 +45,6 @@ class ReportController extends Controller
 
         $fromCarbon = Carbon::parse($from)->startOfDay();
         $toCarbon   = Carbon::parse($to)->endOfDay();
-
-        $funnelMode = $request->input('funnel_mode', 'cohort');
 
         $sla = new SlaService();
 
@@ -75,11 +72,6 @@ class ReportController extends Controller
         // ── Section 9: Avg days per stage (existing) ──
         $avgDays = $this->buildAvgDaysPerStage($fromCarbon, $toCarbon);
 
-        // ── Section 10: Sales funnel (Estimated / In-Process / Enrolled / Lost) ──
-        $funnelByConsultant = $this->buildSalesFunnel($fromCarbon, $toCarbon, $funnelMode, 'sales_consultant_id');
-        $funnelByCsAgent    = $this->buildSalesFunnel($fromCarbon, $toCarbon, $funnelMode, 'assigned_cs_agent_id');
-        $cancellationBreakdown = $this->buildCancellationBreakdown($fromCarbon, $toCarbon, $funnelMode);
-
         // For agent filter dropdowns
         $allAgents = User::where('role', 'cs_agent')->where('active', true)->orderBy('name')->get();
 
@@ -87,9 +79,79 @@ class ReportController extends Controller
             'from', 'to',
             'overview', 'agentPerf', 'slaBreaches', 'overdueFollowups',
             'activityFeed', 'monthlyTrend', 'conversion', 'avgDays',
-            'allAgents',
-            'funnelMode', 'funnelByConsultant', 'funnelByCsAgent', 'cancellationBreakdown'
+            'allAgents'
         ));
+    }
+
+    public function salesFunnel(Request $request)
+    {
+        $request->validate([
+            'from'        => 'nullable|date_format:Y-m-d',
+            'to'          => 'nullable|date_format:Y-m-d',
+            'funnel_mode' => 'nullable|in:cohort,period',
+        ]);
+
+        $from = $request->input('from', now()->startOfMonth()->toDateString());
+        $to   = $request->input('to', now()->toDateString());
+
+        if ($from > $to) {
+            [$from, $to] = [$to, $from];
+        }
+
+        $fromCarbon = Carbon::parse($from)->startOfDay();
+        $toCarbon   = Carbon::parse($to)->endOfDay();
+        $funnelMode = $request->input('funnel_mode', 'cohort');
+
+        // Restrict report to consultants whose targets cover at least one month in the range.
+        // Empty collection → page renders the "no targets defined" empty state.
+        $consultantIdsWithTargets = $this->consultantsWithTargetsInRange($fromCarbon, $toCarbon);
+
+        $funnelByConsultant    = $this->buildSalesFunnel(
+            $fromCarbon, $toCarbon, $funnelMode, 'sales_consultant_id', $consultantIdsWithTargets
+        );
+        $cancellationBreakdown = $this->buildCancellationBreakdown(
+            $fromCarbon, $toCarbon, $funnelMode, $consultantIdsWithTargets
+        );
+
+        return view('admin.reports.sales', compact(
+            'from', 'to', 'funnelMode',
+            'funnelByConsultant', 'cancellationBreakdown',
+            'consultantIdsWithTargets'
+        ));
+    }
+
+    /**
+     * Return the set of sales_consultant_ids that have at least one
+     * sales_consultant_period_goals row whose (year, month) falls inside
+     * any month overlapping [$from, $to]. The Sales Funnel report is
+     * scoped to this set: consultants without a target are invisible.
+     */
+    private function consultantsWithTargetsInRange(Carbon $from, Carbon $to): \Illuminate\Support\Collection
+    {
+        $months = collect();
+        $cursor = $from->copy()->startOfMonth();
+        $end    = $to->copy()->startOfMonth();
+        while ($cursor <= $end) {
+            $months->push(['y' => (int) $cursor->year, 'm' => (int) $cursor->month]);
+            $cursor->addMonth();
+        }
+
+        if ($months->isEmpty()) {
+            return collect();
+        }
+
+        return DB::table('sales_consultant_period_goals as scpg')
+            ->join('sales_period_goals as spg', 'spg.id', '=', 'scpg.sales_period_goal_id')
+            ->where(function ($q) use ($months) {
+                foreach ($months as $row) {
+                    $q->orWhere(function ($w) use ($row) {
+                        $w->where('spg.period_year', $row['y'])
+                          ->where('spg.period_month', $row['m']);
+                    });
+                }
+            })
+            ->distinct()
+            ->pluck('scpg.sales_consultant_id');
     }
 
     private function buildOverview(Carbon $from, Carbon $to, SlaService $sla): array
@@ -508,9 +570,25 @@ class ReportController extends Controller
      *            stays as a snapshot ("right now"). Tells you "in this period, how much
      *            arrived AND how much enrolled (regardless of when they arrived)?"
      */
-    private function buildSalesFunnel(Carbon $from, Carbon $to, string $mode, string $groupColumn): \Illuminate\Support\Collection
-    {
-        $base = fn() => Student::query()->whereNotIn('product_type', self::ADD_ON_TYPES);
+    private function buildSalesFunnel(
+        Carbon $from,
+        Carbon $to,
+        string $mode,
+        string $groupColumn,
+        ?\Illuminate\Support\Collection $consultantIds = null,
+    ): \Illuminate\Support\Collection {
+        // When a consultant-id whitelist is provided AND we're grouping by
+        // sales_consultant_id, scope every query to that set. The CS-agent
+        // grouping path ignores the filter (consultants ≠ agents).
+        $applyConsultantScope = $consultantIds !== null && $groupColumn === 'sales_consultant_id';
+
+        $base = function () use ($applyConsultantScope, $consultantIds) {
+            $q = Student::query()->whereNotIn('product_type', self::ADD_ON_TYPES);
+            if ($applyConsultantScope) {
+                $q->whereIn('sales_consultant_id', $consultantIds);
+            }
+            return $q;
+        };
 
         $rangeApplies = function ($q, string $column) use ($from, $to) {
             return $q->whereBetween($column, [$from, $to]);
@@ -656,10 +734,18 @@ class ReportController extends Controller
      * Cohort mode = students whose form arrived in range.
      * Period mode = students whose application_cancelled_at fell in range.
      */
-    private function buildCancellationBreakdown(Carbon $from, Carbon $to, string $mode): \Illuminate\Support\Collection
-    {
+    private function buildCancellationBreakdown(
+        Carbon $from,
+        Carbon $to,
+        string $mode,
+        ?\Illuminate\Support\Collection $consultantIds = null,
+    ): \Illuminate\Support\Collection {
         $q = Student::whereNotIn('product_type', self::ADD_ON_TYPES)
             ->where('application_status', 'cancelled');
+
+        if ($consultantIds !== null) {
+            $q->whereIn('sales_consultant_id', $consultantIds);
+        }
 
         if ($mode === 'cohort') {
             $q->whereBetween('form_submitted_at', [$from, $to]);

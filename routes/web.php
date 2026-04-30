@@ -115,6 +115,7 @@ Route::middleware(['auth', 'admin_or_application'])->prefix('admin')->name('admi
 
     // Reports
     Route::get('reports',           [ReportController::class, 'index'])->name('reports.index');
+    Route::get('reports/sales',     [ReportController::class, 'salesFunnel'])->name('reports.sales');
     Route::get('reports/insurance', [ReportController::class, 'insurance'])->name('reports.insurance');
 
     // Applications team

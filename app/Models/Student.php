@@ -27,6 +27,8 @@ class Student extends Model
         'cancellation_reason', 'cancellation_justified',
         'application_status', 'application_notes',
         'college_application_date', 'college_response_date', 'offer_letter_received_at',
+        'completed_course', 'completed_university', 'completed_intake', 'completed_price', 'completed_at',
+        'application_cancellation_reason', 'application_cancellation_stage', 'application_cancelled_at',
         'special_condition_options', 'special_condition_other', 'special_condition_status',
         'special_condition_reviewed_by', 'special_condition_reviewed_at', 'special_condition_review_notes',
         'reduced_entry_amount', 'reduced_entry_other', 'reduced_entry_status',
@@ -54,6 +56,9 @@ class Student extends Model
         'college_application_date' => 'date',
         'college_response_date'    => 'date',
         'offer_letter_received_at' => 'datetime',
+        'completed_at'             => 'datetime',
+        'application_cancelled_at' => 'datetime',
+        'completed_price'          => 'decimal:2',
         'sales_price'        => 'decimal:2',
         'sales_price_scholarship' => 'decimal:2',
         'special_condition_options'     => 'array',
@@ -253,6 +258,7 @@ class Student extends Model
             'applied',
             'waiting_college',
             'offer_received',
+            'enrolled',
             'cancelled',
         ];
     }
@@ -266,10 +272,30 @@ class Student extends Model
             'applied'         => 'Applied to College',
             'waiting_college' => 'Waiting College Response',
             'offer_received'  => 'Offer Received',
+            'enrolled'        => 'Enrolled',
             'cancelled'       => 'Cancelled',
             null, ''          => '—',
             default           => ucfirst(str_replace('_', ' ', $status)),
         };
+    }
+
+    public static function applicationCancellationReasons(): array
+    {
+        return [
+            'did_not_pay'           => "Didn't pay",
+            'went_elsewhere'        => 'Went elsewhere',
+            'visa_refused'          => 'Visa refused',
+            'withdrew'              => 'Withdrew',
+            'documents_incomplete'  => 'Documents incomplete',
+            'college_rejected'      => 'College rejected',
+            'other'                 => 'Other',
+        ];
+    }
+
+    public static function applicationCancellationReasonLabel(?string $code): string
+    {
+        if ($code === null || $code === '') return '—';
+        return self::applicationCancellationReasons()[$code] ?? ucfirst(str_replace('_', ' ', $code));
     }
 
     public static function specialConditionOptions(): array

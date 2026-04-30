@@ -124,7 +124,9 @@ eduauto/extension/
 
 ### User roles
 - `admin` — full access to admin panel + all API endpoints
-- `agent` (default) — API access restricted to their own assigned students
+- `cs_agent` (default) — API access restricted to their own assigned students
+- `application` — Applications team. Owns the `application_status` lifecycle (see §16). Access to `/admin/applications/*` via `EnsureAdminOrApplication` middleware.
+- `sales_agent` — Sales pipeline (prototype). Access via `sales_stage` global scope opt-in.
 
 ### Authorization rule (API)
 Every student-specific API endpoint enforces:
@@ -169,6 +171,21 @@ Exception: `GET /api/students/match` — intentionally open to all agents (exten
 | `gift_received_at` | timestamp\|null | Set when gift is marked received |
 | `form_submitted_at` | timestamp\|null | Set by webhook on creation |
 | `first_contacted_at` | timestamp\|null | Set on first status change away from `waiting_initial_documents` |
+| `application_status` | enum\|null | Applications-team lifecycle. See §16. Independent from `status`. |
+| `application_notes` | text\|null | Free-text notes from Applications team |
+| `college_application_date` | date\|null | When Applications submitted the application to the college |
+| `college_response_date` | date\|null | When the college responded |
+| `offer_letter_received_at` | timestamp\|null | When the offer letter arrived |
+| `completed_course` | string\|null | **Realized** course at enrollment (may differ from `course`) |
+| `completed_university` | string\|null | **Realized** university at enrollment (may differ from `university`) |
+| `completed_intake` | string\|null | **Realized** intake at enrollment |
+| `completed_price` | decimal\|null | **Realized** price at enrollment (may differ from `sales_price`) |
+| `completed_at` | timestamp\|null | When the student moved to `application_status='enrolled'` |
+| `application_cancellation_reason` | string\|null | Dropdown value (see `Student::applicationCancellationReasons()`) |
+| `application_cancellation_stage` | string\|null | Snapshot of the `application_status` value just before cancellation |
+| `application_cancelled_at` | timestamp\|null | When the student moved to `application_status='cancelled'` |
+| `cancellation_reason` | text\|null | **CS-side** free-text reason; not the same as `application_cancellation_reason` |
+| `cancellation_justified` | boolean\|null | CS-side: justified cancellations don't trigger the −€5 KPI penalty |
 
 ### Student statuses (`Student::allStatuses()`)
 ```
@@ -515,8 +532,64 @@ chmod -R 775 /var/www/eduauto/storage bootstrap/cache
 
 - **Never use `DATE_FORMAT()`** in Eloquent queries — always filter with PHP/Carbon for SQLite compatibility
 - **Never modify `pipeline_stage`** — it has been replaced by `status` entirely
-- **`Student::allStatuses()`** is the single source of truth for valid status values — use it for validation and iteration everywhere
-- **`Student::statusLabel(string $status)`** returns the human-readable label
+- **`Student::allStatuses()`** is the single source of truth for valid CS status values — use it for validation and iteration everywhere
+- **`Student::allApplicationStatuses()`** is the single source of truth for valid Applications status values
+- **`Student::statusLabel(string $status)`** / **`Student::applicationStatusLabel(string $status)`** return human-readable labels
 - **Admin controllers** are in `App\Http\Controllers\Admin\` — separate from API controllers in `App\Http\Controllers\Api\`
 - **The extension is the primary frontend** — all key CS actions must be accessible from within WhatsApp Web, not just the admin panel
 - **Template placeholders** use `{student_name}` syntax; always replace using `.split('{student_name}').join(name)` in JS, never `.replace(/{student_name}/g, name)`
+- **Two parallel student lifecycles** — CS `status` and Applications `application_status` are independent (no auto-sync). Don't conflate them in queries or reports.
+
+---
+
+## 16. Applications Module
+
+A parallel lifecycle layered onto the `students` table, owned by the **Applications team** (user role `application`). The CS team and Applications team operate on the same student row but advance independent status fields.
+
+### Status enum (`Student::allApplicationStatuses()`)
+```
+new_dispatch     → New Dispatch          [default at form arrival; set by webhook]
+in_review        → In Review
+waiting_cs       → Waiting CS
+applied          → Applied to College
+waiting_college  → Waiting College Response
+offer_received   → Offer Received
+enrolled         → Enrolled              [terminal-success — commission realized]
+cancelled        → Cancelled             [terminal-loss]
+```
+
+### Capture flow on terminal transitions
+
+**Moving to `enrolled`** — `ApplicationStudentController::update()` requires:
+- `completed_course`, `completed_university`, `completed_intake`, `completed_price` (REQUIRED)
+- `completed_at` (defaults to now)
+
+These fields capture the **realized** values (which can differ from the form-arrival estimates `course` / `university` / `intake` / `sales_price`). The Sales Funnel report sums `COALESCE(completed_price, sales_price)` for enrolled rows.
+
+**Moving to `cancelled`** — requires:
+- `application_cancellation_reason` (dropdown — see `Student::applicationCancellationReasons()`)
+- Controller auto-sets `application_cancellation_stage` (snapshot of prior `application_status`) and `application_cancelled_at`.
+
+### Cancellation reasons
+```
+did_not_pay | went_elsewhere | visa_refused | withdrew | documents_incomplete | college_rejected | other
+```
+
+### Files
+| Path | Role |
+|---|---|
+| `app/Http/Controllers/Admin/Applications/ApplicationStudentController.php` | Edit page handler — validates capture fields on enrolled/cancelled transitions |
+| `app/Http/Middleware/EnsureAdminOrApplication.php` | Guards `/admin/applications/*` |
+| `resources/views/admin/applications/student_edit.blade.php` | Edit form with inline capture sections (toggled by status dropdown via vanilla JS) |
+| `resources/views/admin/applications/_chat_thread.blade.php` | CS ↔ Applications chat (uses `StudentChat` model with `author_role` ∈ {application, cs_agent, admin}) |
+
+### Sales Funnel report
+
+`ReportController::buildSalesFunnel($from, $to, $mode, $groupColumn)` powers the new report section in `/admin/reports`. Two modes:
+- **Cohort** (`form_submitted_at` filter; bucket = current `application_status`) — answers "of leads that arrived in range, what's their state now?"
+- **Period** (per-bucket date filter: form_submitted_at / completed_at / application_cancelled_at) — answers "in this period, how much arrived AND how much enrolled, regardless of when those enrolments arrived?"
+
+Per-row metrics: `estimated_count/euro`, `in_process_count/euro`, `enrolled_count/euro` (uses `completed_price` when set), `lost_count/euro`, `conversion_rate`. Grouped by **Sales Consultant** and **CS Agent** in two stacked tables. A separate cancellation-reason breakdown table follows.
+
+### Independence rule
+Setting `application_status='enrolled'` does NOT auto-change CS `status`. The CS agent moves their own status separately. This is intentional — keep both lifecycles independent in reports and queries.

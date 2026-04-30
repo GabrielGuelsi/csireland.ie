@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\InsurancePolicy;
 use App\Models\MessageLog;
 use App\Models\Note;
+use App\Models\SalesConsultant;
 use App\Models\Student;
 use App\Models\StudentStageLog;
 use App\Models\User;
@@ -31,8 +32,9 @@ class ReportController extends Controller
     public function index(Request $request)
     {
         $request->validate([
-            'from' => 'nullable|date_format:Y-m-d',
-            'to'   => 'nullable|date_format:Y-m-d',
+            'from'        => 'nullable|date_format:Y-m-d',
+            'to'          => 'nullable|date_format:Y-m-d',
+            'funnel_mode' => 'nullable|in:cohort,period',
         ]);
 
         $from = $request->input('from', now()->startOfMonth()->toDateString());
@@ -44,6 +46,8 @@ class ReportController extends Controller
 
         $fromCarbon = Carbon::parse($from)->startOfDay();
         $toCarbon   = Carbon::parse($to)->endOfDay();
+
+        $funnelMode = $request->input('funnel_mode', 'cohort');
 
         $sla = new SlaService();
 
@@ -71,6 +75,11 @@ class ReportController extends Controller
         // ── Section 9: Avg days per stage (existing) ──
         $avgDays = $this->buildAvgDaysPerStage($fromCarbon, $toCarbon);
 
+        // ── Section 10: Sales funnel (Estimated / In-Process / Enrolled / Lost) ──
+        $funnelByConsultant = $this->buildSalesFunnel($fromCarbon, $toCarbon, $funnelMode, 'sales_consultant_id');
+        $funnelByCsAgent    = $this->buildSalesFunnel($fromCarbon, $toCarbon, $funnelMode, 'assigned_cs_agent_id');
+        $cancellationBreakdown = $this->buildCancellationBreakdown($fromCarbon, $toCarbon, $funnelMode);
+
         // For agent filter dropdowns
         $allAgents = User::where('role', 'cs_agent')->where('active', true)->orderBy('name')->get();
 
@@ -78,7 +87,8 @@ class ReportController extends Controller
             'from', 'to',
             'overview', 'agentPerf', 'slaBreaches', 'overdueFollowups',
             'activityFeed', 'monthlyTrend', 'conversion', 'avgDays',
-            'allAgents'
+            'allAgents',
+            'funnelMode', 'funnelByConsultant', 'funnelByCsAgent', 'cancellationBreakdown'
         ));
     }
 
@@ -485,6 +495,189 @@ class ReportController extends Controller
             ->whereHas('student', fn($q) => $q->whereBetween('form_submitted_at', [$from, $to]))
             ->groupBy('from_stage')
             ->pluck('avg_hours', 'from_stage');
+    }
+
+    /**
+     * Build the sales funnel grouped by either sales_consultant_id or assigned_cs_agent_id.
+     *
+     * Two time-dimension modes:
+     *  - cohort: rows are filtered by form_submitted_at; bucket comes from current state.
+     *            Tells you "of the leads that arrived in this range, what's their status now?"
+     *  - period: each bucket has its own date filter (form_submitted_at for estimated,
+     *            completed_at for enrolled, application_cancelled_at for lost). In-process
+     *            stays as a snapshot ("right now"). Tells you "in this period, how much
+     *            arrived AND how much enrolled (regardless of when they arrived)?"
+     */
+    private function buildSalesFunnel(Carbon $from, Carbon $to, string $mode, string $groupColumn): \Illuminate\Support\Collection
+    {
+        $base = fn() => Student::query()->whereNotIn('product_type', self::ADD_ON_TYPES);
+
+        $rangeApplies = function ($q, string $column) use ($from, $to) {
+            return $q->whereBetween($column, [$from, $to]);
+        };
+
+        // Estimated: students whose form arrived in the range.
+        // (For cohort mode this is also the universe for in-process / enrolled / lost.)
+        $estimatedQuery = $rangeApplies($base(), 'form_submitted_at');
+
+        // For cohort mode all four buckets share the same form-arrival universe;
+        // bucket assignment comes from the student's current application_status.
+        if ($mode === 'cohort') {
+            $estimatedRows = (clone $estimatedQuery)
+                ->selectRaw("$groupColumn as group_key, application_status, sales_price, completed_price")
+                ->get();
+
+            return $this->aggregateFunnelRows(
+                $estimatedRows,
+                $groupColumn,
+                fn($r) => true,
+                fn($r) => !in_array($r->application_status, ['enrolled', 'cancelled'], true),
+                fn($r) => $r->application_status === 'enrolled',
+                fn($r) => $r->application_status === 'cancelled',
+            );
+        }
+
+        // Period mode: each bucket has its own date filter.
+        $estimatedRows = (clone $estimatedQuery)
+            ->selectRaw("$groupColumn as group_key, sales_price")
+            ->get();
+
+        $enrolledRows = $base()
+            ->whereBetween('completed_at', [$from, $to])
+            ->where('application_status', 'enrolled')
+            ->selectRaw("$groupColumn as group_key, sales_price, completed_price")
+            ->get();
+
+        $lostRows = $base()
+            ->whereBetween('application_cancelled_at', [$from, $to])
+            ->where('application_status', 'cancelled')
+            ->selectRaw("$groupColumn as group_key, sales_price")
+            ->get();
+
+        // In-process snapshot is "right now", not bound to the date range — it's
+        // a state, not an event, so a date range doesn't carve it cleanly.
+        $inProcessRows = $base()
+            ->whereNotIn('application_status', ['enrolled', 'cancelled'])
+            ->whereNotNull('application_status')
+            ->selectRaw("$groupColumn as group_key, sales_price")
+            ->get();
+
+        return $this->mergePeriodRows($estimatedRows, $inProcessRows, $enrolledRows, $lostRows, $groupColumn);
+    }
+
+    private function aggregateFunnelRows(
+        \Illuminate\Support\Collection $rows,
+        string $groupColumn,
+        \Closure $isEstimated,
+        \Closure $isInProcess,
+        \Closure $isEnrolled,
+        \Closure $isLost,
+    ): \Illuminate\Support\Collection {
+        $groups = $rows->groupBy('group_key');
+
+        return $groups->map(function ($g, $key) use ($isEstimated, $isInProcess, $isEnrolled, $isLost) {
+            $estimated = $g->filter($isEstimated);
+            $inProcess = $g->filter($isInProcess);
+            $enrolled  = $g->filter($isEnrolled);
+            $lost      = $g->filter($isLost);
+
+            $estimatedCount = $estimated->count();
+            $enrolledCount  = $enrolled->count();
+
+            return [
+                'group_key'        => $key,
+                'group_label'      => $this->resolveGroupLabel($key),
+                'estimated_count'  => $estimatedCount,
+                'estimated_euro'   => (float) $estimated->sum('sales_price'),
+                'in_process_count' => $inProcess->count(),
+                'in_process_euro'  => (float) $inProcess->sum('sales_price'),
+                'enrolled_count'   => $enrolledCount,
+                'enrolled_euro'    => (float) $enrolled->sum(fn($r) => $r->completed_price ?? $r->sales_price),
+                'lost_count'       => $lost->count(),
+                'lost_euro'        => (float) $lost->sum('sales_price'),
+                'conversion_rate'  => $estimatedCount > 0 ? round(($enrolledCount / $estimatedCount) * 100, 1) : null,
+            ];
+        })->sortByDesc('enrolled_euro')->values();
+    }
+
+    private function mergePeriodRows($estimated, $inProcess, $enrolled, $lost, string $groupColumn): \Illuminate\Support\Collection
+    {
+        $allKeys = collect()
+            ->merge($estimated->pluck('group_key'))
+            ->merge($inProcess->pluck('group_key'))
+            ->merge($enrolled->pluck('group_key'))
+            ->merge($lost->pluck('group_key'))
+            ->unique()
+            ->values();
+
+        return $allKeys->map(function ($key) use ($estimated, $inProcess, $enrolled, $lost) {
+            $eRows  = $estimated->where('group_key', $key);
+            $ipRows = $inProcess->where('group_key', $key);
+            $enRows = $enrolled->where('group_key', $key);
+            $lRows  = $lost->where('group_key', $key);
+
+            $estimatedCount = $eRows->count();
+            $enrolledCount  = $enRows->count();
+
+            return [
+                'group_key'        => $key,
+                'group_label'      => $this->resolveGroupLabel($key),
+                'estimated_count'  => $estimatedCount,
+                'estimated_euro'   => (float) $eRows->sum('sales_price'),
+                'in_process_count' => $ipRows->count(),
+                'in_process_euro'  => (float) $ipRows->sum('sales_price'),
+                'enrolled_count'   => $enrolledCount,
+                'enrolled_euro'    => (float) $enRows->sum(fn($r) => $r->completed_price ?? $r->sales_price),
+                'lost_count'       => $lRows->count(),
+                'lost_euro'        => (float) $lRows->sum('sales_price'),
+                // Period-mode conversion compares period enrolments against period arrivals;
+                // not a true cohort rate, but the most useful single number for that view.
+                'conversion_rate'  => $estimatedCount > 0 ? round(($enrolledCount / $estimatedCount) * 100, 1) : null,
+            ];
+        })->sortByDesc('enrolled_euro')->values();
+    }
+
+    private function resolveGroupLabel($key): string
+    {
+        if ($key === null || $key === '') return 'Unassigned';
+        $key = (int) $key;
+        // Cached lookup: build both maps once per request.
+        static $consultants = null;
+        static $agents = null;
+        if ($consultants === null) {
+            $consultants = SalesConsultant::pluck('name', 'id')->toArray();
+            $agents = User::pluck('name', 'id')->toArray();
+        }
+        return $consultants[$key] ?? $agents[$key] ?? "ID #$key";
+    }
+
+    /**
+     * Group cancelled (Applications) students by cancellation reason.
+     * Cohort mode = students whose form arrived in range.
+     * Period mode = students whose application_cancelled_at fell in range.
+     */
+    private function buildCancellationBreakdown(Carbon $from, Carbon $to, string $mode): \Illuminate\Support\Collection
+    {
+        $q = Student::whereNotIn('product_type', self::ADD_ON_TYPES)
+            ->where('application_status', 'cancelled');
+
+        if ($mode === 'cohort') {
+            $q->whereBetween('form_submitted_at', [$from, $to]);
+        } else {
+            $q->whereBetween('application_cancelled_at', [$from, $to]);
+        }
+
+        return $q->selectRaw('application_cancellation_reason, COUNT(*) as students_count, SUM(sales_price) as total_euro')
+            ->groupBy('application_cancellation_reason')
+            ->get()
+            ->map(fn($row) => [
+                'reason'         => $row->application_cancellation_reason,
+                'reason_label'   => Student::applicationCancellationReasonLabel($row->application_cancellation_reason),
+                'students_count' => (int) $row->students_count,
+                'total_euro'     => (float) $row->total_euro,
+            ])
+            ->sortByDesc('students_count')
+            ->values();
     }
 
     private function stageEnteredAt(Student $student): ?Carbon
